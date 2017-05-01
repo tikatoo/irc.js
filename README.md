@@ -1,5 +1,5 @@
 [![Travis](https://travis-ci.org/Throne3d/node-irc.svg?branch=master)](https://travis-ci.org/Throne3d/node-irc)
-[![npm](https://img.shields.io/npm/v/irc.svg?style=flat)](https://www.npmjs.com/package/irc)
+[//]: # Commented: [![npm](https://img.shields.io/npm/Throne3d/irc.svg?style=flat)](https://www.npmjs.com/package/irc)
 [![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
 [![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://opensource.org/licenses/GPL-3.0)
@@ -24,7 +24,7 @@ npm install irc
 If you want to run the latest version (i.e. later than the version available via [npm](http://github.com/isaacs/npm)) you can clone this repo, then use [npm](http://github.com/isaacs/npm) to link-install it:
 
 ```
-    npm link /path/to/your/clone
+npm link /path/to/your/clone
 ```
 
 Of course, you can just clone this, and manually point at the library itself, but we really recommend using [npm](http://github.com/isaacs/npm)!
