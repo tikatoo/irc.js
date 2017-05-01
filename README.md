@@ -1,17 +1,19 @@
-[![Travis](https://img.shields.io/travis/martynsmith/node-irc.svg?style=flat)](https://travis-ci.org/martynsmith/node-irc)
+[![Travis](https://travis-ci.org/Throne3d/node-irc.svg?branch=master)](https://travis-ci.org/Throne3d/node-irc)
 [![npm](https://img.shields.io/npm/v/irc.svg?style=flat)](https://www.npmjs.com/package/irc)
-[![Dependency Status](https://img.shields.io/david/martynsmith/node-irc.svg?style=flat)](https://david-dm.org/martynsmith/node-irc#info=Dependencies)
-[![devDependency Status](https://img.shields.io/david/dev/martynsmith/node-irc.svg?style=flat)](https://david-dm.org/martynsmith/node-irc#info=devDependencies)
+[![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
+[![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://opensource.org/licenses/GPL-3.0)
-[![Join the chat at https://gitter.im/martynsmith/node-irc](https://badges.gitter.im/martynsmith/node-irc.svg)](https://gitter.im/martynsmith/node-irc?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/node-irc](https://badges.gitter.im/node-irc.svg)](https://gitter.im/node-irc)
 
 
-[node-irc](http://node-irc.readthedocs.org/) is an IRC client library written in [JavaScript](http://en.wikipedia.org/wiki/JavaScript) for [Node](http://nodejs.org/).
+[node-irc](https://node-irc-upd.readthedocs.io/) is an IRC client library written in [JavaScript](http://en.wikipedia.org/wiki/JavaScript) for [Node](http://nodejs.org/).
 
-You can access more detailed documentation for this module at [Read the Docs](http://readthedocs.org/docs/node-irc/en/latest/)
+You can access more detailed documentation for this module at [Read the Docs](https://node-irc-upd.readthedocs.io/en/latest/)
 
 
 ## Installation
+
+**Currently outdated**.
 
 The easiest way to get it is via [npm](http://github.com/isaacs/npm):
 
@@ -125,10 +127,12 @@ client.addListener('error', function(message) {
 ## Further Support
 
 Further documentation (including a complete API reference) is available in
-reStructuredText format in the docs/ folder of this project, or online at [Read the Docs](http://readthedocs.org/docs/node-irc/en/latest/).
+reStructuredText format in the docs/ folder of this project, or online at [Read the Docs](https://node-irc-upd.readthedocs.io/en/latest/).
 
 If you find any issues with the documentation (or the module) please send a pull
 request or file an issue and we'll do our best to accommodate.
+
+**Outdated:**
 
 You can also visit us on ##node-irc on freenode to discuss issues you're having
 with the library, pull requests, or anything else related to node-irc.
