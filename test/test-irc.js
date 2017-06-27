@@ -127,6 +127,24 @@ test ('opt.messageSplit used when set', function(t) {
         }
         client._speak('kind', 'target', 'test message');
     });
+    mock.close();
+});
 
+test ('splits by byte with Unicode characters', function(t) {
+    var port = 6667;
+    var mock = testHelpers.MockIrcd(port, 'utf-8', false);
+    var client = new irc.Client('localhost', 'testbot', {
+        secure: false,
+        selfSigned: true,
+        port: port,
+        retryCount: 0,
+        debug: true
+    });
+
+    var group = testHelpers.getFixtures('_splitLongLines_bytes');
+    t.plan(group.length);
+    group.forEach(function(item) {
+        t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
+    });
     mock.close();
 });
