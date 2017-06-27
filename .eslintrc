@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "indent": [2, 4,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "camelcase": [2,
+      {
+        "properties": "never"
+      }
+    ],
+    "consistent-this": [2,
+      "self"
+    ]
+  }
+}

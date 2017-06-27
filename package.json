@@ -5,7 +5,7 @@
   "author": "Edward Jones <throne3d@gmail.com>",
   "scripts": {
     "test": "./node_modules/faucet/bin/cmd.js test/test-*.js",
-    "lint": "./node_modules/jscs/bin/jscs --preset=airbnb */*.js"
+    "lint": "./node_modules/eslint/bin/eslint.js */*.js"
   },
   "contributors": [
     "Fionn Kelleher <me@fionn.co>",
@@ -41,6 +41,7 @@
     "ansi-color": "0.2.1",
     "faucet": "0.0.1",
     "jscs": "1.9.0",
-    "tape": "^3.0.3"
+    "tape": "^3.0.3",
+    "eslint": "^4.1.1"
   }
 }
