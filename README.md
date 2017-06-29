@@ -7,6 +7,7 @@
 
 
 [node-irc](https://node-irc-upd.readthedocs.io/) is an IRC client library written in [JavaScript](http://en.wikipedia.org/wiki/JavaScript) for [Node](http://nodejs.org/).
+This project is a fork of [another GitHub repository](https://github.com/martynsmith/node-irc).
 
 You can access more detailed documentation for this module at [Read the Docs](https://node-irc-upd.readthedocs.io/en/latest/)
 
