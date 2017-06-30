@@ -40,6 +40,9 @@ test('various origins and types of chanmodes get handled correctly', function(t)
 
     mock.server.on('connection', function() {
         mock.send(':localhost 001 testbot :Welcome!\r\n');
+    });
+
+    client.on('registered', function() {
         mock.send(':localhost 005 testbot MODES=12 CHANTYPES=# PREFIX=(ohv)@%+ CHANMODES=beIqa,kfL,lj,psmntirRcOAQKVCuzNSMTGHFEB\r\n');
         mock.send(':testbot MODE testbot :+ix\r\n');
         mock.send(':testbot JOIN :#channel\r\n');
