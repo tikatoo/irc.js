@@ -67,7 +67,7 @@ function runTests(t, isSecure, useSecureObject) {
 }
 
 function withClient(func, conf) {
-    var obj = {}
+    var obj = {};
     obj.port = 6667;
     obj.mock = testHelpers.MockIrcd(obj.port, 'utf-8', false);
     var ircConf = {
@@ -85,8 +85,6 @@ function withClient(func, conf) {
     obj.client = new irc.Client('localhost', 'testbot', ircConf);
 
     func(obj);
-
-    obj.mock.close();
 }
 
 test ('splitting of long lines', function(t) {
@@ -97,6 +95,7 @@ test ('splitting of long lines', function(t) {
         group.forEach(function(item) {
             t.deepEqual(client._splitLongLines(item.input, item.maxLength, []), item.result);
         });
+        obj.mock.close();
     });
 });
 
@@ -109,6 +108,7 @@ test ('splitting of long lines with no maxLength defined.', function(t) {
         group.forEach(function(item) {
             t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
         });
+        obj.mock.close();
     });
 });
 
@@ -125,6 +125,7 @@ test ('opt.messageSplit used when set', function(t) {
             }
             client._speak('kind', 'target', 'test message');
         });
+        obj.mock.close();
     }, { messageSplit: 10 });
 });
 
@@ -136,5 +137,6 @@ test ('splits by byte with Unicode characters', function(t) {
         group.forEach(function(item) {
             t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
         });
+        obj.mock.close();
     });
 });
