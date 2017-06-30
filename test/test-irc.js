@@ -66,85 +66,75 @@ function runTests(t, isSecure, useSecureObject) {
     });
 }
 
-test ('splitting of long lines', function(t) {
-    var port = 6667;
-    var mock = testHelpers.MockIrcd(port, 'utf-8', false);
-    var client = new irc.Client('localhost', 'testbot', {
+function withClient(func, conf) {
+    var obj = {}
+    obj.port = 6667;
+    obj.mock = testHelpers.MockIrcd(obj.port, 'utf-8', false);
+    var ircConf = {
         secure: false,
         selfSigned: true,
-        port: port,
+        port: obj.port,
         retryCount: 0,
         debug: true
-    });
+    };
+    if (conf) {
+        for (var prop in conf) {
+            ircConf[prop] = conf[prop];
+        }
+    }
+    obj.client = new irc.Client('localhost', 'testbot', ircConf);
 
-    var group = testHelpers.getFixtures('_splitLongLines');
-    t.plan(group.length);
-    group.forEach(function(item) {
-        t.deepEqual(client._splitLongLines(item.input, item.maxLength, []), item.result);
+    func(obj);
+
+    obj.mock.close();
+}
+
+test ('splitting of long lines', function(t) {
+    withClient(function(obj) {
+        var client = obj.client;
+        var group = testHelpers.getFixtures('_splitLongLines');
+        t.plan(group.length);
+        group.forEach(function(item) {
+            t.deepEqual(client._splitLongLines(item.input, item.maxLength, []), item.result);
+        });
     });
-    mock.close();
 });
 
 test ('splitting of long lines with no maxLength defined.', function(t) {
-    var port = 6667;
-    var mock = testHelpers.MockIrcd(port, 'utf-8', false);
-    var client = new irc.Client('localhost', 'testbot', {
-        secure: false,
-        selfSigned: true,
-        port: port,
-        retryCount: 0,
-        debug: true
+    withClient(function(obj) {
+        var client = obj.client;
+        var group = testHelpers.getFixtures('_splitLongLines_no_max');
+        console.log(group.length);
+        t.plan(group.length);
+        group.forEach(function(item) {
+            t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
+        });
     });
-
-    var group = testHelpers.getFixtures('_splitLongLines_no_max');
-    console.log(group.length);
-    t.plan(group.length);
-    group.forEach(function(item) {
-        t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
-    });
-    mock.close();
 });
 
 test ('opt.messageSplit used when set', function(t) {
-    var port = 6667;
-    var mock = testHelpers.MockIrcd(port, 'utf-8', false);
-    var client = new irc.Client('localhost', 'testbot', {
-        secure: false,
-        selfSigned: true,
-        port: port,
-        retryCount: 0,
-        debug: true,
-        messageSplit: 10
-    });
-
-    var group = testHelpers.getFixtures('_speak');
-    t.plan(group.length);
-    group.forEach(function(item) {
-        client.maxLineLength = item.length;
-        client._splitLongLines = function(words, maxLength, destination) {
-            t.equal(maxLength, item.expected);
-            return [words];
-        }
-        client._speak('kind', 'target', 'test message');
-    });
-    mock.close();
+    withClient(function(obj) {
+        var client = obj.client;
+        var group = testHelpers.getFixtures('_speak');
+        t.plan(group.length);
+        group.forEach(function(item) {
+            client.maxLineLength = item.length;
+            client._splitLongLines = function(words, maxLength, destination) {
+                t.equal(maxLength, item.expected);
+                return [words];
+            }
+            client._speak('kind', 'target', 'test message');
+        });
+    }, { messageSplit: 10 });
 });
 
 test ('splits by byte with Unicode characters', function(t) {
-    var port = 6667;
-    var mock = testHelpers.MockIrcd(port, 'utf-8', false);
-    var client = new irc.Client('localhost', 'testbot', {
-        secure: false,
-        selfSigned: true,
-        port: port,
-        retryCount: 0,
-        debug: true
+    withClient(function(obj) {
+        var client = obj.client;
+        var group = testHelpers.getFixtures('_splitLongLines_bytes');
+        t.plan(group.length);
+        group.forEach(function(item) {
+            t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
+        });
     });
-
-    var group = testHelpers.getFixtures('_splitLongLines_bytes');
-    t.plan(group.length);
-    group.forEach(function(item) {
-        t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
-    });
-    mock.close();
 });
