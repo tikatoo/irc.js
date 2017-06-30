@@ -140,3 +140,30 @@ test ('splits by byte with Unicode characters', function(t) {
         obj.mock.close();
     });
 });
+
+test ('does not crash when disconnected and trying to send messages', function(t) {
+    withClient(function(obj) {
+        var client = obj.client;
+        var mock = obj.mock;
+
+        mock.server.on('connection', function() {
+            mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
+        });
+
+        client.on('registered', function() {
+            client.say('#channel', 'message');
+            client.disconnect();
+        });
+
+        client.conn.once('close', function() {
+            client.say('#channel', 'message2');
+            client.end();
+            client.say('#channel', 'message3');
+            t.end();
+        });
+
+        mock.on('end', function() {
+            mock.close();
+        });
+    });
+});
