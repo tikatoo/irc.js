@@ -22,6 +22,7 @@ test('handles various origins and types of chanmodes correctly', function(t) {
     var expected = [
         { key: '#channel', serverName: '#channel', users: {}, modeParams: { n: [] }, mode: 'n' },
         { key: '#channel', serverName: '#channel', users: {}, modeParams: { n: [], t: [] }, mode: 'nt' },
+        { key: '#channel', serverName: '#channel', users: { testbot: '@' }, modeParams: { n: [], t: [] }, mode: '+nt' },
         { key: '#channel', serverName: '#channel', users: { testbot: '@' }, mode: '+ntb', modeParams: { b: ['*!*@AN.IP.1'], n: [], t: [] } },
         { key: '#channel', serverName: '#channel', users: { testbot: '@' }, mode: '+ntb', modeParams: { b: ['*!*@AN.IP.1', '*!*@AN.IP.2'], n: [], t: [] } },
         { key: '#channel', serverName: '#channel', users: { testbot: '@' }, mode: '+ntb', modeParams: { b: ['*!*@AN.IP.1', '*!*@AN.IP.2', '*!*@AN.IP.3'], n: [], t: [] } },
@@ -54,6 +55,7 @@ test('handles various origins and types of chanmodes correctly', function(t) {
         mock.send(':localhost 353 testbot = #channel :@testbot\r\n');
         mock.send(':localhost 366 testbot #channel :End of /NAMES list.\r\n');
         mock.send(':localhost 324 testbot #channel +nt\r\n');
+        mock.send(':localhost MODE #channel -b *!*@AN.IP.1\r\n');
         mock.send(':localhost MODE #channel +b *!*@AN.IP.1\r\n');
         mock.send(':localhost MODE #channel +bb *!*@AN.IP.2 *!*@AN.IP.3\r\n');
         mock.send(':localhost MODE #channel -b *!*@AN.IP.2\r\n');
