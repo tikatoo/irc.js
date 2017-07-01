@@ -1,5 +1,13 @@
 # Change Log
 
+## [v0.6.1](https://github.com/martynsmith/node-irc/tree/v0.6.1) (2016-07-01)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.6.0...v0.6.1)
+
+**Fixed bugs:**
+
+- Fix crash on `-mode` event when mode not set (e.g. unbanning a user when the user is not banned)
+- README now represents updated version of program, represents name change of npm package to `irc-upd`
+
 ## [v0.6.0](https://github.com/martynsmith/node-irc/tree/v0.6.0) (2016-07-01)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.5.2...v0.6.0)
 
