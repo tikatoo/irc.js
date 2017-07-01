@@ -1,5 +1,5 @@
 {
-  "name": "irc",
+  "name": "irc-upd",
   "description": "An IRC client library for node",
   "version": "0.6.0",
   "author": "Edward Jones <throne3d@gmail.com>",
