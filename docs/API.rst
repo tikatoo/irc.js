@@ -142,16 +142,16 @@ Client
 
 .. js:function:: Client.list([arg1, arg2, ...])
 
-   Request a channel listing from the server.
-   The arguments for this method are fairly server specific, so this method passes them through exactly as specified.
+    Request a channel listing from the server.
+    The arguments for this method are fairly server specific, so this method passes them through exactly as specified.
 
-   Responses from the server are available throrugh the `channellist_start`, `channellist_item`, and `channellist` events.
+    Responses from the server are available throrugh the `channellist_start`, `channellist_item`, and `channellist` events.
 
 .. js:function:: Client.connect([retryCount [, callback]])
 
-   Connects to the server.
-   Used when `autoConnect` in the options is set to false, or after a disconnect.
-   If `retryCount` is a function, it will be treated as a `callback` (i.e. both arguments to this function are optional).
+    Connects to the server.
+    Used when `autoConnect` in the options is set to false, or after a disconnect.
+    If `retryCount` is a function, it will be treated as a `callback` (i.e. both arguments to this function are optional).
 
     :param integer retryCount: an optional number of times to attempt reconnection
     :param function callback: an optional callback to fire upon connection
@@ -438,7 +438,7 @@ Events
             server: "irc.example.com", // the server address (if the prefix was a server prefix)
             rawCommand: "PRIVMSG", // the command exactly as sent from the server
             command: "PRIVMSG", // human-readable version of the command (if it was previously, say, numeric)
-            commandType: "normal" // normal, error, or reply
+            commandType: "normal", // normal, error, or reply
             args: ['#test', 'test message'] // arguments to the command
         }
 
@@ -473,6 +473,8 @@ Colors
 .. js:data:: irc.colors.codes
 
     Lists the colors available and the relevant mIRC color codes.
+
+    ::
 
     {
         white: '\u000300',
