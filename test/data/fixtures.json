@@ -128,7 +128,18 @@
 			"commandType": "reply",
 			"args": ["nodebot", "#ubuntu", "+CLcntjf", "5:10", "#ubuntu-unregged"]
 		}
-
+	},
+	"parse-line-nonstrict": {
+		":견본!~examplename@example.host PRIVMSG #channel :test message": {
+			"prefix": "견본!~examplename@example.host",
+			"nick": "견본",
+			"user": "~examplename",
+			"host": "example.host",
+			"command": "PRIVMSG",
+			"rawCommand": "PRIVMSG",
+			"commandType": "normal",
+			"args": ["#channel", "test message"]
+		}
 	},
 	"433-before-001": {
 		"sent": [
