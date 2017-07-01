@@ -3,7 +3,7 @@ var test = require('tape');
 
 var testHelpers = require('./helpers');
 
-test('various origins and types of chanmodes get handled correctly', function(t) {
+test('handles various origins and types of chanmodes correctly', function(t) {
     var mock = testHelpers.MockIrcd();
     var client = new irc.Client('localhost', 'testbot', { debug: true });
 
@@ -11,10 +11,12 @@ test('various origins and types of chanmodes get handled correctly', function(t)
     client.on('+mode', function() {
         //console.log(client.chans['#channel']);
         t.deepEqual(client.chans['#channel'], expected[count++]);
+        if (count == expected.length) client.disconnect();
     });
     client.on('-mode', function() {
         //console.log(client.chans['#channel']);
         t.deepEqual(client.chans['#channel'], expected[count++]);
+        if (count == expected.length) client.disconnect();
     });
 
     var expected = [
@@ -38,6 +40,8 @@ test('various origins and types of chanmodes get handled correctly', function(t)
         { key: '#channel', serverName: '#channel', users: { testbot: '@' }, mode: '+ntbKF', modeParams: { F: [], K: [], b: ['*!*@AN.IP.1', '*!*@AN.IP.3'], n: [], t: [] } }
     ];
 
+    t.plan(expected.length);
+
     mock.server.on('connection', function() {
         mock.send(':localhost 001 testbot :Welcome!\r\n');
     });
@@ -60,8 +64,6 @@ test('various origins and types of chanmodes get handled correctly', function(t)
         mock.send(':localhost MODE #channel -j\r\n');
         mock.send(':localhost MODE #channel +ps\r\n');
         mock.send(':localhost MODE #channel +K-p-s+F\r\n');
-
-        client.disconnect();
     });
 
     mock.on('end', function() {
