@@ -1,5 +1,5 @@
 [![Travis](https://travis-ci.org/Throne3d/node-irc.svg?branch=master)](https://travis-ci.org/Throne3d/node-irc)
-[![npm](https://img.shields.io/npm/Throne3d/irc-upd.svg?style=flat)](https://www.npmjs.com/package/irc-upd)
+[![npm](https://badge.fury.io/js/irc-upd.svg)](https://www.npmjs.com/package/irc-upd)
 [![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
 [![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://opensource.org/licenses/GPL-3.0)
