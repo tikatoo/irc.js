@@ -18,7 +18,7 @@ Client
         {
             userName: 'nodebot',
             realName: 'nodeJS IRC client',
-            password: 'pass',
+            password: null,
             port: 6667,
             localAddress: null,
             debug: false,
@@ -38,7 +38,7 @@ Client
             channelPrefixes: "&#",
             messageSplit: 512,
             encoding: '',
-            enableStrictParse: true
+            enableStrictParse: false
         }
 
     `secure` (SSL connection) can be a true value or an object (the kind of object
