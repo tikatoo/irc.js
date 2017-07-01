@@ -18,6 +18,7 @@ Client
         {
             userName: 'nodebot',
             realName: 'nodeJS IRC client',
+            password: 'pass',
             port: 6667,
             localAddress: null,
             debug: false,
