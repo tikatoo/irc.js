@@ -1,5 +1,5 @@
 [![Travis](https://travis-ci.org/Throne3d/node-irc.svg?branch=master)](https://travis-ci.org/Throne3d/node-irc)
-<!-- [//]: # Commented: [![npm](https://img.shields.io/npm/Throne3d/irc.svg?style=flat)](https://www.npmjs.com/package/irc) -->
+[![npm](https://img.shields.io/npm/Throne3d/irc-upd.svg?style=flat)](https://www.npmjs.com/package/irc-upd)
 [![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
 [![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://opensource.org/licenses/GPL-3.0)
@@ -19,7 +19,7 @@ You can access more detailed documentation for this module at [Read the Docs](ht
 The easiest way to get it is via [npm](http://github.com/isaacs/npm):
 
 ```
-npm install irc
+npm install irc-upd
 ```
 
 If you want to run the latest version (i.e. later than the version available via [npm](http://github.com/isaacs/npm)) you can clone this repo, then use [npm](http://github.com/isaacs/npm) to link-install it:
@@ -41,7 +41,7 @@ This library provides basic IRC client functionality.
 In the simplest case you can connect to an IRC server like so:
 
 ```js
-var irc = require('irc');
+var irc = require('irc-upd');
 var client = new irc.Client('irc.yourserver.com', 'myNick', {
     channels: ['#channel'],
 });
