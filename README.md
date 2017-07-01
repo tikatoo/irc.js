@@ -14,8 +14,6 @@ You can access more detailed documentation for this module at [Read the Docs](ht
 
 ## Installation
 
-**Currently outdated**.
-
 The easiest way to get it is via [npm](http://github.com/isaacs/npm):
 
 ```
