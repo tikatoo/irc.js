@@ -36,7 +36,8 @@ Client
             stripColors: false,
             channelPrefixes: "&#",
             messageSplit: 512,
-            encoding: ''
+            encoding: '',
+            enableStrictParse: true
         }
 
     `secure` (SSL connection) can be a true value or an object (the kind of object
@@ -82,6 +83,8 @@ Client
     `retryCount` is the number of times the client will try to automatically reconnect when disconnected. It defaults to 0.
 
     `retryDelay` is the number of milliseconds to wait before retying to automatically reconnect when disconnected. It defaults to 2000.
+
+    Setting `enableStrictParse` to true will try to conform more strictly to [the RFC2812 standard](https://tools.ietf.org/html/rfc2812) for parsing nicknames, disabling eg CJK characters in them.
 
 .. js:function:: Client.send(command, arg1, arg2, ...)
 
