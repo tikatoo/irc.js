@@ -79,7 +79,7 @@ Client
     `retryDelay` is the number of milliseconds to wait before retying to automatically reconnect when disconnected.
     It defaults to 2000.
 
-    Setting `enableStrictParse` to true will try to conform more strictly to [the RFC2812 standard](https://tools.ietf.org/html/rfc2812) for parsing nicknames, preventing eg CJK characters from appearing in them.
+    Setting `enableStrictParse` to true will try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
 
 .. js:function:: Client.send(command, arg1, arg2, ...)
 
