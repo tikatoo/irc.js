@@ -427,7 +427,7 @@ Events
 
     Emitted when the client receives a "message" from the server.
     A message is a single line of data from the server.
-    The `message` parameter to the callback is the processed version of this message, and contains:
+    The `message` parameter to the callback is the processed version of this message, and contains something of the form:
 
     .. code-block:: js
 
