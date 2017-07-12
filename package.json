@@ -39,8 +39,8 @@
   },
   "devDependencies": {
     "ansi-color": "0.2.1",
+    "eslint": "^4.2.0",
     "faucet": "0.0.1",
-    "tape": "^4.7.0",
-    "eslint": "^4.1.1"
+    "tape": "^4.7.0"
   }
 }
