@@ -52,10 +52,10 @@ Client
 
     `floodProtectionDelay` sets the amount of time that the client will wait between sending subsequent messages when `floodProtection` is enabled.
 
-    Setting `sasl` to true enables SASL support.
+    `sasl` enables SASL support.
     You'll also want to set `nick`, `userName`, and `password` for authentication.
 
-    Setting `stripColors` to true removes mIRC colors (0x03 followed by one or two ASCII numbers for the foreground and background color), as well as ircII "effect" codes (``0x02`` bold, ``0x1f`` underline, ``0x16`` reverse, ``0x0f`` reset) from the message before parsing it.
+    `stripColors` removes mIRC colors (0x03 followed by one or two ASCII numbers for the foreground and background color), as well as ircII "effect" codes (``0x02`` bold, ``0x1f`` underline, ``0x16`` reverse, ``0x0f`` reset) from the message before parsing it.
 
     `messageSplit` will split up large messages sent with the `say` method into multiple messages of lengths shorter than `messageSplit` bytes, attempting to split at whitespace where possible.
 
@@ -63,12 +63,14 @@ Client
     To disable this, leave the value blank or false.
     Example values are ``UTF-8`` and ``ISO-8859-15``.
 
-    Setting `debug` to true will emit timestamped messages to the console using `util.log` when certain events are fired.
+    `debug` will output timestamped messages to the console using `util.log` when certain events are fired. If this is true, it will override `showErrors`.
+
+    `showErrors` will output timestamped errors to the console using `util.log`, such as when certain IRC responses are encountered or an attempt to find the message charset fails. If `debug` is true, it will override this.
 
     `autoRejoin` has the client rejoin channels after being kicked.
 
-    Setting `autoConnect` to false prevents the Client from connecting when instantiated.
-    You will need to call ``connect()`` on the client instance::
+    `autoConnect` has the client connect when instantiated.
+    If disabled, you will need to call ``connect()`` on the client instance::
 
         var client = new irc.Client({ autoConnect: false, ... });
         client.connect();
@@ -79,7 +81,7 @@ Client
     `retryDelay` is the number of milliseconds to wait before retying to automatically reconnect when disconnected.
     It defaults to 2000.
 
-    Setting `enableStrictParse` to true will try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
+    `enableStrictParse` will make the client try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
 
 .. js:function:: Client.send(command, arg1, arg2, ...)
 
