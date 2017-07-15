@@ -55,3 +55,29 @@ var testHelpers = require('./helpers');
         client.on('registered', function() { registerCount += 1; });
     });
 });
+
+test('it disallows double connections', function(t) {
+    var mock = testHelpers.MockIrcd();
+    var client = new irc.Client('localhost', 'testbot', {debug: true});
+
+    t.plan(2);
+
+    mock.server.on('connection', function() {
+        mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
+    });
+
+    client.on('registered', function() {
+        var oldConn = client.conn;
+        client.out.error = function(msg) {
+            t.equal(msg, 'Connection already active, not reconnecting – please disconnect first', 'got expected error on attempted double-connect');
+        }
+        client.connect();
+        t.equal(oldConn, client.conn, 'did not change connection when connecting again');
+
+        client.disconnect();
+    });
+
+    mock.on('end', function() {
+        mock.close();
+    });
+});
