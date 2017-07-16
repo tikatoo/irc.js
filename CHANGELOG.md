@@ -1,5 +1,25 @@
 # Change Log
 
+## [v0.6.2](https://github.com/Throne3d/node-irc/tree/v0.6.2) (2016-07-16)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.6.1...v0.6.2)
+
+**Fixed bugs:**
+
+- Fix reconnection by destroying the connection only when properly closed (and add a test for this)
+- Guard an error from showing when `showErrors` is false; relatedly use an 'out' object for error and debug messages to be less repetitive with guarding based on config values
+- Latest changelog version links now point to the right repository
+- Docs: fix formatting of a RFC2812 link
+- Remove unused jscs devDependency
+
+**Misc:**
+
+- Make the 'non-latest' message (hopefully) less confusing, only show in debug mode
+- Update tape to ^4.7.0
+- Update eslint to ^4.2.0
+- Docs: clarify example message is an example
+- Docs: be consistent with phrasing around boolean config values
+- Add Node 8 to Travis builds
+
 ## [v0.6.1](https://github.com/Throne3d/node-irc/tree/v0.6.1) (2016-07-01)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.6.0...v0.6.1)
 
