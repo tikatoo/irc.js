@@ -153,6 +153,7 @@ Client
 
     Connects to the server.
     Used when `autoConnect` in the options is set to false, or after a disconnect.
+    Outputs an error to console if there is already an active connection.
     If `retryCount` is a function, it will be treated as a `callback` (i.e. both arguments to this function are optional).
 
     :param integer retryCount: an optional number of times to attempt reconnection
