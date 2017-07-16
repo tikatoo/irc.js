@@ -11,5 +11,8 @@ before_install:
 script:
   - "npm run-script lint"
   - "npm test"
-#notifications:
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/070d1502bf5e5f56e80c
 #  irc: "chat.freenode.net##node-irc"
