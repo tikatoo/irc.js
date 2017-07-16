@@ -28,17 +28,20 @@ var MockIrcd = function(port, encoding, isSecure) {
     this.outgoing = [];
 
     this.server = connectionClass.createServer(options, function(c) {
+        var active = true;
         c.on('data', function(data) {
             var msg = data.toString(self.encoding).split('\r\n').filter(function(m) { return m; });
             self.incoming = self.incoming.concat(msg);
         });
 
         self.on('send', function(data) {
+            if (!active || c.destroyed) return;
             self.outgoing.push(data);
             c.write(data);
         });
 
         c.on('end', function() {
+            active = false;
             self.emit('end');
         });
     });
