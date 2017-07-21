@@ -6,18 +6,6 @@ var testHelpers = require('./helpers');
 var expected = testHelpers.getFixtures('basic');
 var greeting = ':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n';
 
-test('connect, register and quit', function(t) {
-    runTests(t, false, false);
-});
-
-test('connect, register and quit, securely', function(t) {
-    runTests(t, true, false);
-});
-
-test('connect, register and quit, securely, with secure object', function(t) {
-    runTests(t, true, true);
-});
-
 function runTests(t, isSecure, useSecureObject) {
     var port = isSecure ? 6697 : 6667;
     var mock = testHelpers.MockIrcd(port, 'utf-8', isSecure);
@@ -65,9 +53,8 @@ function runTests(t, isSecure, useSecureObject) {
 }
 
 function withClient(func, conf) {
+    // closes mock server when it gets a connection end event if server used (client disconnects)
     var obj = {};
-    obj.port = 6667;
-    obj.mock = testHelpers.MockIrcd(obj.port, 'utf-8', false);
     var ircConf = {
         secure: false,
         selfSigned: true,
@@ -75,15 +62,37 @@ function withClient(func, conf) {
         retryCount: 0,
         debug: true
     };
-    if (conf) {
-        for (var prop in conf) {
-            ircConf[prop] = conf[prop];
+    if (conf) ircConf.messageSplit = conf.messageSplit;
+    if (conf && conf.withoutServer) {
+        ircConf.autoConnect = false;
+    } else {
+        var t;
+        obj.closeWithEnd = function(test) {
+            t = test;
         }
+
+        obj.port = 6667;
+        obj.mock = testHelpers.MockIrcd(obj.port, 'utf-8', false);
+        obj.mock.on('end', function() {
+            obj.mock.close(function(){ if (t) t.end(); });
+        });
     }
     obj.client = new irc.Client('localhost', 'testbot', ircConf);
 
     func(obj);
 }
+
+test('connect, register and quit', function(t) {
+    runTests(t, false, false);
+});
+
+test('connect, register and quit, securely', function(t) {
+    runTests(t, true, false);
+});
+
+test('connect, register and quit, securely, with secure object', function(t) {
+    runTests(t, true, true);
+});
 
 test ('splitting of long lines', function(t) {
     withClient(function(obj) {
@@ -93,8 +102,7 @@ test ('splitting of long lines', function(t) {
         group.forEach(function(item) {
             t.deepEqual(client._splitLongLines(item.input, item.maxLength, []), item.result);
         });
-        obj.mock.close();
-    });
+    }, { withoutServer: true });
 });
 
 test ('splitting of long lines with no maxLength defined.', function(t) {
@@ -105,8 +113,7 @@ test ('splitting of long lines with no maxLength defined.', function(t) {
         group.forEach(function(item) {
             t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
         });
-        obj.mock.close();
-    });
+    }, { withoutServer: true });
 });
 
 test ('opt.messageSplit used when set', function(t) {
@@ -114,6 +121,7 @@ test ('opt.messageSplit used when set', function(t) {
         var client = obj.client;
         var group = testHelpers.getFixtures('_speak');
         t.plan(group.length);
+        client.send = function() { };
         group.forEach(function(item) {
             client.maxLineLength = item.length;
             client._splitLongLines = function(words, maxLength, _destination) {
@@ -122,8 +130,7 @@ test ('opt.messageSplit used when set', function(t) {
             }
             client._speak('kind', 'target', 'test message');
         });
-        obj.mock.close();
-    }, { messageSplit: 10 });
+    }, { messageSplit: 10, withoutServer: true });
 });
 
 test ('splits by byte with Unicode characters', function(t) {
@@ -134,17 +141,17 @@ test ('splits by byte with Unicode characters', function(t) {
         group.forEach(function(item) {
             t.deepEqual(client._splitLongLines(item.input, null, []), item.result);
         });
-        obj.mock.close();
-    });
+    }, { withoutServer: true });
 });
 
 test ('does not crash when disconnected and trying to send messages', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
+        obj.closeWithEnd(t);
 
         mock.server.on('connection', function() {
-            mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
+            mock.send(greeting);
         });
 
         client.on('registered', function() {
@@ -156,11 +163,6 @@ test ('does not crash when disconnected and trying to send messages', function(t
             client.say('#channel', 'message2');
             client.end();
             client.say('#channel', 'message3');
-            t.end();
-        });
-
-        mock.on('end', function() {
-            mock.close();
         });
     });
 });

@@ -26,6 +26,7 @@ var MockIrcd = function(port, encoding, isSecure) {
     this.encoding = encoding || 'utf-8';
     this.incoming = [];
     this.outgoing = [];
+    console.log('Mock server initializing.');
 
     this.server = connectionClass.createServer(options, function(c) {
         var active = true;
@@ -47,6 +48,10 @@ var MockIrcd = function(port, encoding, isSecure) {
     });
 
     this.server.listen(this.port);
+
+    this.server.on('close', function(){
+        console.log('Mock server closed.');
+    })
 };
 util.inherits(MockIrcd, EventEmitter);
 
@@ -55,7 +60,7 @@ MockIrcd.prototype.send = function(data) {
 };
 
 MockIrcd.prototype.close = function() {
-    this.server.close();
+    this.server.close.apply(this.server, arguments);
 };
 
 MockIrcd.prototype.getIncomingMsgs = function() {

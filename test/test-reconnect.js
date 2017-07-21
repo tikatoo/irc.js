@@ -8,11 +8,11 @@ var testHelpers = require('./helpers');
         var mock = testHelpers.MockIrcd();
         var client = new irc.Client('localhost', 'testbot', {debug: true, retryDelay: 50});
 
-        var conn = null;
+        var conns = [];
         var registerCount = 0;
 
         mock.server.on('connection', function(c) {
-            conn = c;
+            conns.push(c);
             mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
         });
 
@@ -22,7 +22,7 @@ var testHelpers = require('./helpers');
                 client.end();
             } else if (modifier == 'when connection breaks') {
                 // break connection from server end, like connection error
-                conn.destroy();
+                conns[conns.length-1].destroy();
             } else {
                 throw new Error("Unexpected test modifier");
             }
@@ -31,22 +31,35 @@ var testHelpers = require('./helpers');
 
             // reconnects after 50ms, should take less than 450ms to connect, so end the test after that
             setTimeout(function() {
-                killServer();
+                killClient();
             }, 500);
         };
 
         var secondTime = function() {
             // further connections should be considered bad
             mock.server.on('connection', function() {
-                t.ok(false);
+                t.ok(false, 'must only connect twice');
             });
         }
 
-        var killServer = function() {
-            t.equal(registerCount, 2, 'connected to server exactly twice');
-            t.end();
+        var killClient = function() {
+            mock.once('end', killedServer);
             client.disconnect();
-            mock.close();
+        }
+
+        var killedServer = function() {
+            t.equal(registerCount, 2, 'must connect to server exactly twice');
+            setTimeout(killConns, 500);
+            mock.close(function(){ t.end(); });
+        }
+
+        var killConns = function() {
+            conns.forEach(function(conn) {
+                if (!conn.destroyed) {
+                    t.ok(false, 'connections must end themselves properly');
+                    conn.destroy();
+                }
+            });
         }
 
         client.once('registered', firstTime);
@@ -58,7 +71,7 @@ test('it disallows double connections', function(t) {
     var mock = testHelpers.MockIrcd();
     var client = new irc.Client('localhost', 'testbot', {debug: true});
 
-    t.plan(2);
+    var count = 0;
 
     mock.server.on('connection', function() {
         mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
@@ -67,15 +80,18 @@ test('it disallows double connections', function(t) {
     client.on('registered', function() {
         var oldConn = client.conn;
         client.out.error = function(msg) {
+            count += 1;
             t.equal(msg, 'Connection already active, not reconnecting – please disconnect first', 'got expected error on attempted double-connect');
         }
         client.connect();
+        count += 1;
         t.equal(oldConn, client.conn, 'did not change connection when connecting again');
 
         client.disconnect();
     });
 
     mock.on('end', function() {
-        mock.close();
+        t.equal(count, 2, 'must pass two tests');
+        mock.close(function(){ t.end(); });
     });
 });
