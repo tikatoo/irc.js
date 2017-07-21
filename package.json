@@ -5,7 +5,8 @@
   "author": "Edward Jones <throne3d@gmail.com>",
   "scripts": {
     "test": "tape test/test-*.js | faucet",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "posttest": "npm run lint"
   },
   "contributors": [
     "Fionn Kelleher <me@fionn.co>",
