@@ -118,25 +118,19 @@ test ('splitting of long lines with no maxLength defined.', function(t) {
 
 test ('opt.messageSplit used when set', function(t) {
     withClient(function(obj) {
-        obj.closeWithEnd(t);
         var client = obj.client;
-        var mock = obj.mock;
-        mock.server.on('connection', function() {
-            var group = testHelpers.getFixtures('_speak');
-            var count = 0;
-            group.forEach(function(item) {
-                client.maxLineLength = item.length;
-                client._splitLongLines = function(words, maxLength, _destination) {
-                    t.equal(maxLength, item.expected);
-                    count += 1;
-                    return [words];
-                }
-                client._speak('kind', 'target', 'test message');
-            });
-            t.equal(count, group.length, 'must test all fixtures');
-            client.disconnect();
+        var group = testHelpers.getFixtures('_speak');
+        t.plan(group.length);
+        client.send = function() { };
+        group.forEach(function(item) {
+            client.maxLineLength = item.length;
+            client._splitLongLines = function(words, maxLength, _destination) {
+                t.equal(maxLength, item.expected);
+                return [words];
+            }
+            client._speak('kind', 'target', 'test message');
         });
-    }, { messageSplit: 10 });
+    }, { messageSplit: 10, withoutServer: true });
 });
 
 test ('splits by byte with Unicode characters', function(t) {
