@@ -180,8 +180,6 @@ test ('unhandled messages are emitted appropriately', function(t) {
 
         client.on('registered', function() {
             mock.send(':127.0.0.1 150 :test\r\n');
-            //mock.close();
-            client.on('error', function(){console.log("error");});
             client.on('unhandled', function(msg) {
                 var expected = {
                     prefix: '127.0.0.1',

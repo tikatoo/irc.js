@@ -469,7 +469,7 @@ Events
 
     `function (message) { }`
 
-    Emitted when ever the server responds with a message the bot doesn't recognize and doesn't handle.
+    Emitted whenever the server responds with a message the bot doesn't recognize and doesn't handle.
     See the `raw` event for details on the `message` object.
 
 Colors
