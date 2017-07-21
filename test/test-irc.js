@@ -148,7 +148,6 @@ test ('does not crash when disconnected and trying to send messages', function(t
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
-        obj.closeWithEnd(t);
 
         mock.server.on('connection', function() {
             mock.send(greeting);
@@ -163,6 +162,48 @@ test ('does not crash when disconnected and trying to send messages', function(t
             client.say('#channel', 'message2');
             client.end();
             client.say('#channel', 'message3');
+            t.end();
+        });
+    });
+});
+
+test ('unhandled messages are emitted appropriately', function(t) {
+    withClient(function(obj) {
+        var client = obj.client;
+        var mock = obj.mock;
+        obj.closeWithEnd(t);
+        var endTimeout;
+
+        mock.server.on('connection', function() {
+            mock.send(greeting);
+        });
+
+        client.on('registered', function() {
+            mock.send(':127.0.0.1 150 :test\r\n');
+            //mock.close();
+            client.on('error', function(){console.log("error");});
+            client.on('unhandled', function(msg) {
+                var expected = {
+                    prefix: '127.0.0.1',
+                    server: '127.0.0.1',
+                    rawCommand: '150',
+                    command: '150',
+                    commandType: 'normal',
+                    args: ['test']
+                };
+                t.deepEqual(msg, expected, 'unhandled message should be emitted as expected');
+                client.disconnect();
+            });
+            endTimeout = setTimeout(function() {
+                if (t.ended) return;
+                t.ok(false, 'callback for event must be called');
+                client.disconnect();
+            }, 1000);
+        });
+
+        client.conn.once('close', function() {
+            clearTimeout(endTimeout)
+            client.end();
         });
     });
 });
