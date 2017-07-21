@@ -83,6 +83,25 @@ Client
 
     `enableStrictParse` will make the client try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
 
+.. js:function:: Client.connect([retryCount [, callback]])
+
+    Connects to the server.
+    Used when `autoConnect` in the options is set to false, or after a disconnect.
+    Outputs an error to console if there is already an active connection.
+    If `retryCount` is a function, it will be treated as a `callback` (i.e. both arguments to this function are optional).
+
+    :param integer retryCount: an optional number of times to attempt reconnection
+    :param function callback: an optional callback to fire upon connection
+
+.. js:function:: Client.disconnect([message [, callback]])
+
+    Disconnects from the IRC server.
+    If `message` is a function it will be treated as a `callback` (i.e. both arguments to this function are
+    optional).
+
+    :param string message: an optional message to send when disconnecting.
+    :param function callback: an optional callback
+
 .. js:function:: Client.send(command, arg1, arg2, ...)
 
     Sends a raw message to the server.
@@ -112,14 +131,6 @@ Client
     :param string target: a nickname or a channel to send the message to
     :param string message: the message to send
 
-.. js:function:: Client.ctcp(target, type, text)
-
-    Sends a CTCP message to the specified target.
-
-    :param string target: a nickname or a channel to send the CTCP message to
-    :param string type: the type of the CTCP message; that is, "privmsg" for a ``PRIVMSG``, and anything else for a ``NOTICE``
-    :param string text: the CTCP message to send
-
 .. js:function:: Client.action(target, message)
 
     Sends an action to the specified target.
@@ -142,31 +153,20 @@ Client
     :param string nick: a nickname to request a whois of
     :param function callback: a callback to fire when the server sends the response; is passed the same information as in the ``whois`` event above
 
+.. js:function:: Client.ctcp(target, type, text)
+
+    Sends a CTCP message to the specified target.
+
+    :param string target: a nickname or a channel to send the CTCP message to
+    :param string type: the type of the CTCP message; that is, "privmsg" for a ``PRIVMSG``, and anything else for a ``NOTICE``
+    :param string text: the CTCP message to send
+
 .. js:function:: Client.list([arg1, arg2, ...])
 
     Request a channel listing from the server.
     The arguments for this method are fairly server specific, so this method passes them through exactly as specified.
 
     Responses from the server are available throrugh the `channellist_start`, `channellist_item`, and `channellist` events.
-
-.. js:function:: Client.connect([retryCount [, callback]])
-
-    Connects to the server.
-    Used when `autoConnect` in the options is set to false, or after a disconnect.
-    Outputs an error to console if there is already an active connection.
-    If `retryCount` is a function, it will be treated as a `callback` (i.e. both arguments to this function are optional).
-
-    :param integer retryCount: an optional number of times to attempt reconnection
-    :param function callback: an optional callback to fire upon connection
-
-.. js:function:: Client.disconnect([message [, callback]])
-
-    Disconnects from the IRC server.
-    If `message` is a function it will be treated as a `callback` (i.e. both arguments to this function are
-    optional).
-
-    :param string message: an optional message to send when disconnecting.
-    :param function callback: an optional callback
 
 .. js:function:: Client.activateFloodProtection([interval])
 
@@ -193,6 +193,65 @@ Events
     `function (motd) { }`
 
     Emitted when the server sends the message of the day to clients.
+
+.. js:data:: 'message'
+
+    `function (nick, to, text, message) { }`
+
+    Emitted when a message is sent.
+    The `to` parameter can be either a nick (which is most likely this client's nick and represents a private message), or a channel (which represents a message to that channel).
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'message#'
+
+    `function (nick, to, text, message) { }`
+
+    Emitted when a message is sent to any channel (i.e. exactly the same as the `message` event but excluding private messages).
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'message#channel'
+
+    `function (nick, text, message) { }`
+
+    Same as the 'message' event, but only emitted for the specified channel.
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'selfMessage'
+
+    `function (to, text) { }`
+
+    Emitted when a message is sent from the client.
+    The `to` parameter is the target of the message, which can be either a nick (in a private message) or a channel (as in a message to that channel)
+
+.. js:data:: 'notice'
+
+    `function (nick, to, text, message) { }`
+
+    Emitted when a notice is sent.
+    The `to` parameter can be either a nick (most likely this client's nick and so represents a private message), or a channel (which represents a message to that channel).
+    The `nick` parameter is either the sender's nick or ``null``, representing that the notice comes from the server.
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'action'
+
+    `function (from, to, text, message) { }`
+
+    Emitted whenever a user performs an action (e.g. `/me waves`).
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'pm'
+
+    `function (nick, text, message) { }`
+
+    Same as the 'message' event, but only emitted when the message is directed to the client.
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'invite'
+
+    `function (channel, from, message) { }`
+
+    Emitted when the client receives an `/invite`.
+    See the `raw` event for details on the `message` object.
 
 .. js:data:: 'names'
 
@@ -271,86 +330,6 @@ Events
     The `channels` parameter is an array of channels the killed user was in, those known to the client (that is, the ones the bot was present in).
     See the `raw` event for details on the `message` object.
 
-.. js:data:: 'message'
-
-    `function (nick, to, text, message) { }`
-
-    Emitted when a message is sent.
-    The `to` parameter can be either a nick (which is most likely this client's nick and represents a private message), or a channel (which represents a message to that channel).
-    See the `raw` event for details on the `message` object.
-
-.. js:data:: 'message#'
-
-    `function (nick, to, text, message) { }`
-
-    Emitted when a message is sent to any channel (i.e. exactly the same as the `message` event but excluding private messages).
-    See the `raw` event for details on the `message` object.
-
-.. js:data:: 'message#channel'
-
-    `function (nick, text, message) { }`
-
-    Same as the 'message' event, but only emitted for the specified channel.
-    See the `raw` event for details on the `message` object.
-
-.. js:data:: 'selfMessage'
-
-    `function (to, text) { }`
-
-    Emitted when a message is sent from the client.
-    The `to` parameter is the target of the message, which can be either a nick (in a private message) or a channel (as in a message to that channel)
-
-.. js:data:: 'notice'
-
-    `function (nick, to, text, message) { }`
-
-    Emitted when a notice is sent.
-    The `to` parameter can be either a nick (most likely this client's nick and so represents a private message), or a channel (which represents a message to that channel).
-    The `nick` parameter is either the sender's nick or ``null``, representing that the notice comes from the server.
-    See the `raw` event for details on the `message` object.
-
-.. js:data:: 'ping'
-
-   `function (server) { }`
-
-   Emitted when a server PINGs the client.
-   The client will automatically send a PONG request just before this is emitted.
-
-.. js:data:: 'pm'
-
-    `function (nick, text, message) { }`
-
-    Same as the 'message' event, but only emitted when the message is directed to the client.
-    See the `raw` event for details on the `message` object.
-
-.. js:data:: 'ctcp'
-
-   `function (from, to, text, type, message) { }`
-
-   Emitted when a CTCP notice or privmsg was received (`type` is either ``notice`` or ``privmsg``).
-   See the `raw` event for details on the `message` object.
-
-.. js:data:: 'ctcp-notice'
-
-   `function (from, to, text, message) { }`
-
-   Emitted when a CTCP notice is received.
-   See the `raw` event for details on the `message` object.
-
-.. js:data:: 'ctcp-privmsg'
-
-   `function (from, to, text, message) { }`
-
-   Emitted when a CTCP privmsg was received.
-   See the `raw` event for details on the `message` object.
-
-.. js:data:: 'ctcp-version'
-
-   `function (from, to, message) { }`
-
-   Emitted when a CTCP VERSION request is received.
-   See the `raw` event for details on the `message` object.
-
 .. js:data:: 'nick'
 
     `function (oldnick, newnick, channels, message) { }`
@@ -358,16 +337,9 @@ Events
     Emitted when a user changes nick, with the channels the user is known to be in.
     See the `raw` event for details on the `message` object.
 
-.. js:data:: 'invite'
-
-    `function (channel, from, message) { }`
-
-    Emitted when the client receives an `/invite`.
-    See the `raw` event for details on the `message` object.
-
 .. js:data:: '+mode'
 
-  `function (channel, by, mode, argument, message) { }`
+    `function (channel, by, mode, argument, message) { }`
 
     Emitted when a mode is added to a user or channel.
     The `channel` parameter is the channel which the mode is being set on/in.
@@ -379,7 +351,7 @@ Events
 
 .. js:data:: '-mode'
 
-  `function (channel, by, mode, argument, message) { }`
+    `function (channel, by, mode, argument, message) { }`
 
     Emitted when a mode is removed from a user or channel.
     The other arguments are as in the ``+mode`` event.
@@ -392,15 +364,50 @@ Events
     The information should look something like::
 
         {
-            nick: "Ned",
-            user: "martyn",
-            host: "10.0.0.18",
+            nick: "Throne",
+            user: "throne3d",
+            host: "10.0.0.1",
             realname: "Unknown",
-            channels: ["@#purpledishwashers", "#blah", "#mmmmbacon"],
-            server: "*.dollyfish.net.nz",
-            serverinfo: "The Dollyfish Underworld",
+            channels: ["@#throne3d", "#blah", "#channel"],
+            server: "irc.example.com",
+            serverinfo: "Example IRC server",
             operator: "is an IRC Operator"
         }
+
+.. js:data:: 'ping'
+
+    `function (server) { }`
+
+    Emitted when a server PINGs the client.
+    The client will automatically send a PONG request just before this is emitted.
+
+.. js:data:: 'ctcp'
+
+    `function (from, to, text, type, message) { }`
+
+    Emitted when a CTCP notice or privmsg was received (`type` is either ``notice`` or ``privmsg``).
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'ctcp-notice'
+
+    `function (from, to, text, message) { }`
+
+    Emitted when a CTCP notice is received.
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'ctcp-privmsg'
+
+    `function (from, to, text, message) { }`
+
+    Emitted when a CTCP privmsg was received.
+    See the `raw` event for details on the `message` object.
+
+.. js:data:: 'ctcp-version'
+
+    `function (from, to, message) { }`
+
+    Emitted when a CTCP VERSION request is received.
+    See the `raw` event for details on the `message` object.
 
 .. js:data:: 'channellist_start'
 
@@ -410,19 +417,19 @@ Events
 
 .. js:data:: 'channellist_item'
 
-   `function (channel_info) {}`
+    `function (channel_info) {}`
 
-   Emitted for each channel the server returns in a channel listing.
-   The `channel_info` object contains keys 'name', 'users' (number of users in the channel), and 'topic'.
+    Emitted for each channel the server returns in a channel listing.
+    The `channel_info` object contains keys 'name', 'users' (number of users in the channel), and 'topic'.
 
 .. js:data:: 'channellist'
 
-   `function (channel_list) {}`
+    `function (channel_list) {}`
 
-   Emitted when the server has finished returning a channel list.
-   The `channel_list` array is simply a list of the objects that were returned in the intervening `channellist_item` events.
+    Emitted when the server has finished returning a channel list.
+    The `channel_list` array is simply a list of the objects that were returned in the intervening `channellist_item` events.
 
-   This data is also available through the ``Client.channellist`` property after this event has fired.
+    This data is also available through the ``Client.channellist`` property after this event has fired.
 
 .. js:data:: 'raw'
 
@@ -455,13 +462,6 @@ Events
     `function (message) { }`
 
     Emitted when ever the server responds with an error-type message.
-    See the `raw` event for details on the `message` object.
-
-.. js:data:: 'action'
-
-    `function (from, to, text, message) { }`
-
-    Emitted whenever a user performs an action (e.g. `/me waves`).
     See the `raw` event for details on the `message` object.
 
 Colors
