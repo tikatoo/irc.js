@@ -78,7 +78,7 @@ Client
     `retryCount` is the number of times the client will try to automatically reconnect when disconnected.
     It defaults to 0.
 
-    `retryDelay` is the number of milliseconds to wait before retying to automatically reconnect when disconnected.
+    `retryDelay` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected.
     It defaults to 2000.
 
     `enableStrictParse` will make the client try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
@@ -461,9 +461,16 @@ Events
 
     `function (message) { }`
 
-    Emitted when ever the server responds with an error-type message.
+    Emitted whenever the server responds with an error-type message.
     See the `raw` event for details on the `message` object.
     Unhandled messages, although they are shown as errors in the log, are not emitted using this event: see `unhandled`.
+
+.. js:data:: 'netError'
+
+    `function (exception) { }`
+
+    Emitted when the socket connection to the server emits and error event.
+    See `net.Socket's error event <https://nodejs.org/api/net.html#net_event_error_1>`_ for more information.
 
 .. js:data:: 'unhandled'
 
