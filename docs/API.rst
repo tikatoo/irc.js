@@ -463,6 +463,14 @@ Events
 
     Emitted when ever the server responds with an error-type message.
     See the `raw` event for details on the `message` object.
+    Unhandled messages, although they are shown as errors in the log, are not emitted using this event: see `unhandled`.
+
+.. js:data:: 'unhandled'
+
+    `function (message) { }`
+
+    Emitted when ever the server responds with a message the bot doesn't recognize and doesn't handle.
+    See the `raw` event for details on the `message` object.
 
 Colors
 ------
