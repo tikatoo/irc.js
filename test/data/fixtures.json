@@ -127,6 +127,14 @@
 			"rawCommand": "324",
 			"commandType": "reply",
 			"args": ["nodebot", "#ubuntu", "+CLcntjf", "5:10", "#ubuntu-unregged"]
+		},
+		":127.0.0.1 477 nodebot #channel :Cannot join channel (+r) - you need to be identified with services": {
+			"prefix": "127.0.0.1",
+			"server": "127.0.0.1",
+			"command": "477",
+			"rawCommand": "477",
+			"commandType": "error",
+			"args": ["nodebot", "#channel", "Cannot join channel (+r) - you need to be identified with services"]
 		}
 	},
 	"parse-line-nonstrict": {

@@ -13,9 +13,9 @@ test('irc.parseMessage', function(t) {
             delete checks[line].stripColors;
         }
         t.equal(
-            JSON.stringify(checks[line]),
             JSON.stringify(parseMessage(line, stripColors)),
-            line + ' parses correctly'
+            JSON.stringify(checks[line]),
+            line + ' must parse correctly'
         );
     });
     t.end();
@@ -26,9 +26,9 @@ test('irc.parseMessage non-strict parsing mode', function(t) {
 
     Object.keys(checks).forEach(function(line) {
         t.equal(
-            JSON.stringify(checks[line]),
             JSON.stringify(parseMessage(line, false, false)),
-            line + ' parses correctly'
+            JSON.stringify(checks[line]),
+            line + ' must parse correctly'
         );
     });
     t.end();
