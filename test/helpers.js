@@ -68,6 +68,11 @@ MockIrcd.prototype.getIncomingMsgs = function() {
     return this.incoming;
 };
 
+MockIrcd.prototype.greet = function(username) {
+    username = username || 'testbot';
+    this.send(':localhost 001 ' + username + ' :Welcome to the Internet Relay Chat Network testbot\r\n');
+}
+
 var fixtures = require('./data/fixtures');
 module.exports.getFixtures = function(testSuite) {
     return fixtures[testSuite];

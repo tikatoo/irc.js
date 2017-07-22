@@ -13,9 +13,7 @@ test('connect and quit with message', function(t) {
 
     t.plan(expected.sent.length + expected.received.length + 1);
 
-    mock.server.on('connection', function() {
-        mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
-    });
+    mock.server.on('connection', function() { mock.greet(); });
 
     client.on('registered', function() {
         t.equal(mock.outgoing[0], expected.received[0][0], expected.received[0][1]);

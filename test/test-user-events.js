@@ -22,9 +22,7 @@ test('joins, parts, renicks and quits', function(t) {
     ];
     var actual = [];
 
-    mock.server.on('connection', function() {
-        mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
-    });
+    mock.server.on('connection', function() { mock.greet(); });
 
     client.on('registered', function() {
         // welcome bot, give relevant prefix symbols
