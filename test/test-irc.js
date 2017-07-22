@@ -4,6 +4,7 @@ var test = require('tape');
 var testHelpers = require('./helpers');
 
 var expected = testHelpers.getFixtures('basic');
+var withClient = testHelpers.withClient;
 var greeting = ':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n';
 
 function runTests(t, isSecure, useSecureObject) {
@@ -50,36 +51,6 @@ function runTests(t, isSecure, useSecureObject) {
         }
         mock.close();
     });
-}
-
-function withClient(func, conf) {
-    // closes mock server when it gets a connection end event if server used (client disconnects)
-    var obj = {};
-    var ircConf = {
-        secure: false,
-        selfSigned: true,
-        port: obj.port,
-        retryCount: 0,
-        debug: true
-    };
-    if (conf) ircConf.messageSplit = conf.messageSplit;
-    if (conf && conf.withoutServer) {
-        ircConf.autoConnect = false;
-    } else {
-        var t;
-        obj.closeWithEnd = function(test) {
-            t = test;
-        }
-
-        obj.port = 6667;
-        obj.mock = testHelpers.MockIrcd(obj.port, 'utf-8', false);
-        obj.mock.on('end', function() {
-            obj.mock.close(function(){ if (t) t.end(); });
-        });
-    }
-    obj.client = new irc.Client('localhost', 'testbot', ircConf);
-
-    func(obj);
 }
 
 test('connect, register and quit', function(t) {
