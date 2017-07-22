@@ -2,3 +2,7 @@
 node_modules/
 _build/
 .idea/
+
+# Coverage directory used by tools like istanbul
+coverage
+.nyc_output
