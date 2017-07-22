@@ -83,7 +83,7 @@ module.exports.MockIrcd = function(port, encoding, isSecure) {
     return new MockIrcd(port, encoding, isSecure);
 };
 
-module.exports.withClient = function withClient(func, conf) {
+module.exports.withClient = function withClient(func, givenConf) {
     // closes mock server when it gets a connection end event if server used (client disconnects)
     var obj = {};
     obj.port = 6667;
@@ -94,8 +94,15 @@ module.exports.withClient = function withClient(func, conf) {
         retryCount: 0,
         debug: true
     };
-    if (conf) ircConf.messageSplit = conf.messageSplit;
-    if (conf && conf.withoutServer) {
+
+    var conf = Object.assign({}, givenConf);
+    var withoutServer = conf.withoutServer;
+    delete conf.withoutServer;
+    Object.keys(conf).forEach(function(key) {
+        ircConf[key] = conf[key];
+    });
+
+    if (withoutServer) {
         ircConf.autoConnect = false;
     } else {
         var t;
