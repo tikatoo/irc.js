@@ -5,6 +5,7 @@ var fs = require('fs');
 var net = require('net');
 var tls = require('tls');
 var util = require('util');
+var irc = require('../lib/irc');
 var EventEmitter = require('events').EventEmitter;
 
 var MockIrcd = function(port, encoding, isSecure) {
@@ -74,4 +75,34 @@ module.exports.getFixtures = function(testSuite) {
 
 module.exports.MockIrcd = function(port, encoding, isSecure) {
     return new MockIrcd(port, encoding, isSecure);
+};
+
+module.exports.withClient = function withClient(func, conf) {
+    // closes mock server when it gets a connection end event if server used (client disconnects)
+    var obj = {};
+    obj.port = 6667;
+    var ircConf = {
+        secure: false,
+        selfSigned: true,
+        port: obj.port,
+        retryCount: 0,
+        debug: true
+    };
+    if (conf) ircConf.messageSplit = conf.messageSplit;
+    if (conf && conf.withoutServer) {
+        ircConf.autoConnect = false;
+    } else {
+        var t;
+        obj.closeWithEnd = function(test) {
+            t = test;
+        }
+
+        obj.mock = module.exports.MockIrcd(obj.port, 'utf-8', false);
+        obj.mock.on('end', function() {
+            obj.mock.close(function(){ if (t) t.end(); });
+        });
+    }
+    obj.client = new irc.Client('localhost', 'testbot', ircConf);
+
+    func(obj);
 };
