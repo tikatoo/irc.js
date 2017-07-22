@@ -88,3 +88,70 @@ test('joins, parts, renicks and quits', function(t) {
         t.end();
     });
 });
+
+var withKickSetup = function(t, client, mock, performKicks, onMockClose) {
+    // onMockClose receives a parameter of the number of joins that occurred.
+    mock.server.on('connection', function() { mock.greet(); });
+
+    var joinCount = 0;
+    // prep test to cause client to disconnect on 'endtest' ping
+    mock.on('line', function(line) {
+        if (line.indexOf("JOIN") >= 0) joinCount++;
+        if (line === 'PING endtest') client.disconnect();
+    });
+
+    client.on('registered', function() {
+        // #test: testbot joins, users: testbot, user1, user2
+        client.join('#test');
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n')
+        mock.send(':localhost 353 testbot = #test :testbot @user1 user2\r\n');
+        mock.send(':localhost 366 testbot #test :End of /NAMES list.\r\n');
+
+        performKicks();
+    });
+
+    client.on('kick', function() {
+        t.ok(true, 'client must receive kick');
+        client.send('PING', 'endtest');
+    });
+
+    mock.on('end', function() {
+        mock.close(function(){ onMockClose(joinCount); });
+    });
+};
+
+test ('does not rejoin after kick when config disabled', function(t) {
+    var mock = testHelpers.MockIrcd();
+    var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: false});
+
+    withKickSetup(t, client, mock, function() {
+        mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
+    }, function(joinCount) {
+        t.equal(joinCount, 1, 'server must receive just one join');
+        t.end();
+    });
+});
+
+test ('rejoins when kicked', function(t) {
+    var mock = testHelpers.MockIrcd();
+    var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: true});
+
+    withKickSetup(t, client, mock, function() {
+        mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
+    }, function(joinCount) {
+        t.equal(joinCount, 2, 'server must receive two joins');
+        t.end();
+    });
+});
+
+test ('only rejoins when self kicked', function(t) {
+    var mock = testHelpers.MockIrcd();
+    var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: true});
+
+    withKickSetup(t, client, mock, function() {
+        mock.send(':user1!~user1@example.host KICK #test test2\r\n');
+    }, function(joinCount) {
+        t.equal(joinCount, 1, 'server must receive just one join');
+        t.end();
+    });
+});
