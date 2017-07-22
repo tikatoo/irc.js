@@ -3,25 +3,28 @@ var test = require('tape');
 
 var testHelpers = require('./helpers');
 
-test('irc.parseMessage', function(t) {
-    var checks = testHelpers.getFixtures('parse-line');
+['strict', 'non-strict'].forEach(function(type) {
+    test('irc.parseMessage ' + type + ' mode', function(t) {
+        var checks = testHelpers.getFixtures('parse-line');
 
-    Object.keys(checks).forEach(function(line) {
-        var stripColors = false;
-        if (checks[line].hasOwnProperty('stripColors')) {
-            stripColors = checks[line].stripColors;
-            delete checks[line].stripColors;
-        }
-        t.equal(
-            JSON.stringify(parseMessage(line, stripColors)),
-            JSON.stringify(checks[line]),
-            line + ' must parse correctly'
-        );
+        Object.keys(checks).forEach(function(line) {
+            var stripColors = false;
+            var expected = Object.assign({}, checks[line]);
+            if (expected.hasOwnProperty('stripColors')) {
+                stripColors = expected.stripColors;
+                delete expected.stripColors;
+            }
+            t.equal(
+                JSON.stringify(parseMessage(line, stripColors, type === 'strict')),
+                JSON.stringify(expected),
+                line + ' must parse correctly'
+            );
+        });
+        t.end();
     });
-    t.end();
 });
 
-test('irc.parseMessage non-strict parsing mode', function(t) {
+test('irc.parseMessage non-strict parsing mode with Unicode', function(t) {
     var checks = testHelpers.getFixtures('parse-line-nonstrict');
 
     Object.keys(checks).forEach(function(line) {
