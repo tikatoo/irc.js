@@ -15,7 +15,7 @@ test('user gets opped in auditorium', function(t) {
 
     mock.server.on('connection', function() {
         // Initiate connection
-        mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
+        mock.greet();
 
         // Set prefix modes
         mock.send(':localhost 005 testbot PREFIX=(ov)@+ CHANTYPES=#& :are supported by this server\r\n');

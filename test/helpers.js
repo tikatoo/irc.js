@@ -34,6 +34,7 @@ var MockIrcd = function(port, encoding, isSecure) {
         c.on('data', function(data) {
             var msg = data.toString(self.encoding).split('\r\n').filter(function(m) { return m; });
             self.incoming = self.incoming.concat(msg);
+            msg.forEach(function(line) { self.emit('line', line); });
         });
 
         self.on('send', function(data) {
@@ -67,6 +68,11 @@ MockIrcd.prototype.close = function() {
 MockIrcd.prototype.getIncomingMsgs = function() {
     return this.incoming;
 };
+
+MockIrcd.prototype.greet = function(username) {
+    username = username || 'testbot';
+    this.send(':localhost 001 ' + username + ' :Welcome to the Internet Relay Chat Network testbot\r\n');
+}
 
 var fixtures = require('./data/fixtures');
 module.exports.getFixtures = function(testSuite) {

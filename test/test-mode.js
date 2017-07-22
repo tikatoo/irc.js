@@ -41,9 +41,7 @@ test('handles various origins and types of chanmodes correctly', function(t) {
         { key: '#channel', serverName: '#channel', users: { testbot: '@' }, mode: '+ntbKF', modeParams: { F: [], K: [], b: ['*!*@AN.IP.1', '*!*@AN.IP.3'], n: [], t: [] } }
     ];
 
-    mock.server.on('connection', function() {
-        mock.send(':localhost 001 testbot :Welcome!\r\n');
-    });
+    mock.server.on('connection', function() { mock.greet(); });
 
     client.on('registered', function() {
         mock.send(':localhost 005 testbot MODES=12 CHANTYPES=# PREFIX=(ohv)@%+ CHANMODES=beIqa,kfL,lj,psmntirRcOAQKVCuzNSMTGHFEB\r\n');

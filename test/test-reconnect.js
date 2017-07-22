@@ -13,7 +13,7 @@ var testHelpers = require('./helpers');
 
         mock.server.on('connection', function(c) {
             conns.push(c);
-            mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
+            mock.greet();
         });
 
         var firstTime = function() {
@@ -73,9 +73,7 @@ test('it disallows double connections', function(t) {
 
     var count = 0;
 
-    mock.server.on('connection', function() {
-        mock.send(':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n');
-    });
+    mock.server.on('connection', function() { mock.greet(); });
 
     client.on('registered', function() {
         var oldConn = client.conn;

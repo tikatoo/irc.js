@@ -5,7 +5,6 @@ var testHelpers = require('./helpers');
 
 var expected = testHelpers.getFixtures('basic');
 var withClient = testHelpers.withClient;
-var greeting = ':localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n';
 
 function runTests(t, isSecure, useSecureObject) {
     var port = isSecure ? 6697 : 6667;
@@ -34,9 +33,7 @@ function runTests(t, isSecure, useSecureObject) {
 
     t.plan(expected.sent.length + expected.received.length);
 
-    mock.server.on(isSecure ? 'secureConnection' : 'connection', function() {
-        mock.send(greeting);
-    });
+    mock.server.on(isSecure ? 'secureConnection' : 'connection', function() { mock.greet(); });
 
     client.on('registered', function() {
         t.equal(mock.outgoing[0], expected.received[0][0], expected.received[0][1]);
@@ -120,9 +117,7 @@ test ('does not crash when disconnected and trying to send messages', function(t
         var client = obj.client;
         var mock = obj.mock;
 
-        mock.server.on('connection', function() {
-            mock.send(greeting);
-        });
+        mock.server.on('connection', function() { mock.greet(); });
 
         client.on('registered', function() {
             client.say('#channel', 'message');
@@ -145,9 +140,7 @@ test ('unhandled messages are emitted appropriately', function(t) {
         obj.closeWithEnd(t);
         var endTimeout;
 
-        mock.server.on('connection', function() {
-            mock.send(greeting);
-        });
+        mock.server.on('connection', function(){ mock.greet(); });
 
         client.on('registered', function() {
             mock.send(':127.0.0.1 150 :test\r\n');
