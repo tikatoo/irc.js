@@ -96,8 +96,8 @@ Client
 .. js:function:: Client.disconnect([message [, callback]])
 
     Disconnects from the IRC server.
-    If `message` is a function it will be treated as a `callback` (i.e. both arguments to this function are
-    optional).
+    If `message` is a function it will be treated as a `callback` (i.e. both arguments to this function are optional).
+    Outputs an error to console if it is already disconnected or disconnecting.
 
     :param string message: an optional message to send when disconnecting.
     :param function callback: an optional callback
