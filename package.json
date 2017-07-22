@@ -4,9 +4,9 @@
   "version": "0.6.2",
   "author": "Edward Jones <throne3d@gmail.com>",
   "scripts": {
-    "test": "tape test/test-*.js | faucet",
+    "test": "nyc --reporter=none tape test/test-*.js | faucet",
     "lint": "eslint .",
-    "posttest": "npm run lint"
+    "posttest": "nyc report && npm run lint"
   },
   "contributors": [
     "Fionn Kelleher <me@fionn.co>",
@@ -42,6 +42,7 @@
     "ansi-color": "0.2.1",
     "eslint": "^4.2.0",
     "faucet": "0.0.1",
+    "nyc": "11.0.3",
     "tape": "^4.7.0"
   }
 }
