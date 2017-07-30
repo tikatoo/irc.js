@@ -31,12 +31,12 @@ test('joins, parts, renicks and quits', function(t) {
 
         // #test: testbot joins. users: testbot, user1, user2
         client.join('#test');
-        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n')
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
         mock.send(':localhost 353 testbot = #test :testbot user1 @user2 user3\r\n');
         mock.send(':localhost 366 testbot #test :End of /NAMES list.\r\n');
         // #test2: testbot joins. users: testbot, user1, user3
         client.join('#test2');
-        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test2\r\n')
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test2\r\n');
         mock.send(':localhost 353 testbot = #test2 :testbot user1 user3\r\n');
         mock.send(':localhost 366 testbot #test2 :End of /NAMES list.\r\n');
 
@@ -103,7 +103,7 @@ var withKickSetup = function(t, client, mock, performKicks, onMockClose) {
     client.on('registered', function() {
         // #test: testbot joins, users: testbot, user1, user2
         client.join('#test');
-        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n')
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
         mock.send(':localhost 353 testbot = #test :testbot @user1 user2\r\n');
         mock.send(':localhost 366 testbot #test :End of /NAMES list.\r\n');
 

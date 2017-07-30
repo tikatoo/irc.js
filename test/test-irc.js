@@ -3,10 +3,10 @@ var test = require('tape');
 
 var testHelpers = require('./helpers');
 
-var expected = testHelpers.getFixtures('basic');
 var withClient = testHelpers.withClient;
 
 function runTests(t, isSecure, useSecureObject) {
+    var expected = testHelpers.getFixtures('basic');
     var port = isSecure ? 6697 : 6667;
     var mock = testHelpers.MockIrcd(port, 'utf-8', isSecure);
     var client;
@@ -95,7 +95,7 @@ test ('opt.messageSplit used when set', function(t) {
             client._splitLongLines = function(words, maxLength, _destination) {
                 t.equal(maxLength, item.expected);
                 return [words];
-            }
+            };
             client._speak('kind', 'target', 'test message');
         });
     }, { messageSplit: 10, withoutServer: true });
@@ -164,7 +164,7 @@ test ('unhandled messages are emitted appropriately', function(t) {
         });
 
         client.conn.once('close', function() {
-            clearTimeout(endTimeout)
+            clearTimeout(endTimeout);
             client.end();
         });
     });

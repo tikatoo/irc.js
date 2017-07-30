@@ -17,10 +17,10 @@ var testHelpers = require('./helpers');
         });
 
         var firstTime = function() {
-            if (modifier == 'when ended') {
+            if (modifier === 'when ended') {
                 // trigger client connection end, like connection interrupted
                 client.end();
-            } else if (modifier == 'when connection breaks') {
+            } else if (modifier === 'when connection breaks') {
                 // break connection from server end, like connection error
                 conns[conns.length-1].destroy();
             } else {
@@ -40,18 +40,18 @@ var testHelpers = require('./helpers');
             mock.server.on('connection', function() {
                 t.ok(false, 'must only connect twice');
             });
-        }
+        };
 
         var killClient = function() {
             mock.once('end', killedServer);
             client.disconnect();
-        }
+        };
 
         var killedServer = function() {
             t.equal(registerCount, 2, 'must connect to server exactly twice');
             setTimeout(killConns, 500);
             mock.close(function(){ t.end(); });
-        }
+        };
 
         var killConns = function() {
             conns.forEach(function(conn) {
@@ -60,7 +60,7 @@ var testHelpers = require('./helpers');
                     conn.destroy();
                 }
             });
-        }
+        };
 
         client.once('registered', firstTime);
         client.on('registered', function() { registerCount += 1; });
@@ -80,7 +80,7 @@ test('it disallows double connections', function(t) {
         client.out.error = function(msg) {
             count += 1;
             t.equal(msg, 'Connection already active, not reconnecting – please disconnect first', 'got expected error on attempted double-connect');
-        }
+        };
         client.connect();
         count += 1;
         t.equal(oldConn, client.conn, 'did not change connection when connecting again');

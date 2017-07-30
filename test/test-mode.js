@@ -11,12 +11,12 @@ test('handles various origins and types of chanmodes correctly', function(t) {
     client.on('+mode', function() {
         //console.log(client.chans['#channel']);
         t.deepEqual(client.chans['#channel'], expected[count++]);
-        if (count == expected.length) client.disconnect();
+        if (count === expected.length) client.disconnect();
     });
     client.on('-mode', function() {
         //console.log(client.chans['#channel']);
         t.deepEqual(client.chans['#channel'], expected[count++]);
-        if (count == expected.length) client.disconnect();
+        if (count === expected.length) client.disconnect();
     });
 
     var expected = [

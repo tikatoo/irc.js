@@ -8,7 +8,7 @@ test('user gets opped in auditorium', function(t) {
     var client = new irc.Client('localhost', 'testbot', {debug: true});
 
     client.on('+mode', function(channel, by, mode, argument) {
-        if (channel == '#auditorium' && argument == 'user') {
+        if (channel === '#auditorium' && argument === 'user') {
             client.disconnect();
         }
     });

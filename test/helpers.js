@@ -53,7 +53,7 @@ var MockIrcd = function(port, encoding, isSecure) {
 
     this.server.on('close', function(){
         console.log('Mock server closed.');
-    })
+    });
 };
 util.inherits(MockIrcd, EventEmitter);
 
@@ -72,7 +72,7 @@ MockIrcd.prototype.getIncomingMsgs = function() {
 MockIrcd.prototype.greet = function(username) {
     username = username || 'testbot';
     this.send(':localhost 001 ' + username + ' :Welcome to the Internet Relay Chat Network testbot\r\n');
-}
+};
 
 var fixtures = require('./data/fixtures');
 module.exports.getFixtures = function(testSuite) {
@@ -101,7 +101,7 @@ module.exports.withClient = function withClient(func, conf) {
         var t;
         obj.closeWithEnd = function(test) {
             t = test;
-        }
+        };
 
         obj.mock = module.exports.MockIrcd(obj.port, 'utf-8', false);
         obj.mock.on('end', function() {
