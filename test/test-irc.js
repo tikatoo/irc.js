@@ -168,3 +168,26 @@ test('unhandled messages are emitted appropriately', function(t) {
         });
     });
 });
+
+// TODO: fill in the rest of the events
+
+test.skip('client joins opt.channels on receiving motd');
+
+test.skip('client emits error events properly');
+
+test.skip('client handles topic-related events');
+
+test.skip('client handles channel-list-related events');
+
+test.skip('client handles errors in the raw handler');
+
+test.skip('interface handles disconnecting when disconnected');
+
+test.skip('command queue works as intended');
+
+test.skip('client.part');
+test.skip('client.action');
+test.skip('client.notice');
+test.skip('client.whois');
+test.skip('client handles CTCP');
+test.skip('client.out');
