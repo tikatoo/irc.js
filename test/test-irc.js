@@ -2,7 +2,6 @@ var irc = require('../lib/irc');
 var test = require('tape');
 
 var testHelpers = require('./helpers');
-
 var withClient = testHelpers.withClient;
 
 function runTests(t, isSecure, useSecureObject) {
@@ -62,7 +61,7 @@ test('connect, register and quit, securely, with secure object', function(t) {
     runTests(t, true, true);
 });
 
-test ('splitting of long lines', function(t) {
+test('splitting of long lines', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var group = testHelpers.getFixtures('_splitLongLines');
@@ -73,7 +72,7 @@ test ('splitting of long lines', function(t) {
     }, { withoutServer: true });
 });
 
-test ('splitting of long lines with no maxLength defined.', function(t) {
+test('splitting of long lines with no maxLength defined.', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var group = testHelpers.getFixtures('_splitLongLines_no_max');
@@ -84,7 +83,7 @@ test ('splitting of long lines with no maxLength defined.', function(t) {
     }, { withoutServer: true });
 });
 
-test ('opt.messageSplit used when set', function(t) {
+test('opt.messageSplit used when set', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var group = testHelpers.getFixtures('_speak');
@@ -101,7 +100,7 @@ test ('opt.messageSplit used when set', function(t) {
     }, { messageSplit: 10, withoutServer: true });
 });
 
-test ('splits by byte with Unicode characters', function(t) {
+test('splits by byte with Unicode characters', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var group = testHelpers.getFixtures('_splitLongLines_bytes');
@@ -112,7 +111,7 @@ test ('splits by byte with Unicode characters', function(t) {
     }, { withoutServer: true });
 });
 
-test ('does not crash when disconnected and trying to send messages', function(t) {
+test('does not crash when disconnected and trying to send messages', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
@@ -133,7 +132,7 @@ test ('does not crash when disconnected and trying to send messages', function(t
     });
 });
 
-test ('unhandled messages are emitted appropriately', function(t) {
+test('unhandled messages are emitted appropriately', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
