@@ -22,18 +22,18 @@ Client
             port: 6667,
             localAddress: null,
             debug: false,
+            channels: [],
             showErrors: false,
             autoRejoin: false,
             autoConnect: true,
-            channels: [],
+            retryCount: 0,
+            retryDelay: 2000,
             secure: false,
             selfSigned: false,
             certExpired: false,
             floodProtection: false,
             floodProtectionDelay: 1000,
             sasl: false,
-            retryCount: 0,
-            retryDelay: 2000,
             stripColors: false,
             channelPrefixes: "&#",
             messageSplit: 512,
@@ -41,27 +41,8 @@ Client
             enableStrictParse: false
         }
 
-    `secure` (SSL connection) can be a true value or an object (the kind returned by ``crypto.createCredentials()``) specifying the certificate and other details for validation.
-    If you set `selfSigned` to true, it will accept certificates from a non-trusted CA.
-    If you set `certExpired` to true, the bot will accept expired certificates.
 
     `localAddress` is the address to bind to when connecting.
-
-    `floodProtection` queues all your messages and slowly transmits them to prevent being kicked for flooding.
-    Alternatively, use `Client.activateFloodProtection()` to activate flood protection after instantiating the client.
-
-    `floodProtectionDelay` sets the amount of time that the client will wait between sending subsequent messages when `floodProtection` is enabled.
-
-    `sasl` enables SASL support.
-    You'll also want to set `nick`, `userName`, and `password` for authentication.
-
-    `stripColors` removes mIRC colors (0x03 followed by one or two ASCII numbers for the foreground and background color), as well as ircII "effect" codes (``0x02`` bold, ``0x1f`` underline, ``0x16`` reverse, ``0x0f`` reset) from the message before parsing it.
-
-    `messageSplit` will split up large messages sent with the `say` method into multiple messages of lengths shorter than `messageSplit` bytes, attempting to split at whitespace where possible.
-
-    `encoding` specifies the encoding for the bot to convert messages to.
-    To disable this, leave the value blank or false.
-    Example values are ``UTF-8`` and ``ISO-8859-15``.
 
     `debug` will output timestamped messages to the console using `util.log` when certain events are fired. If this is true, it will override `showErrors`.
 
@@ -80,6 +61,26 @@ Client
 
     `retryDelay` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected.
     It defaults to 2000.
+
+    `secure` (SSL connection) can be a true value or an object (the kind returned by ``crypto.createCredentials()``) specifying the certificate and other details for validation.
+    If you set `selfSigned` to true, it will accept certificates from a non-trusted CA.
+    If you set `certExpired` to true, the bot will accept expired certificates.
+
+    `floodProtection` queues all your messages and slowly transmits them to prevent being kicked for flooding.
+    Alternatively, use `Client.activateFloodProtection()` to activate flood protection after instantiating the client.
+
+    `floodProtectionDelay` sets the amount of time that the client will wait between sending subsequent messages when `floodProtection` is enabled.
+
+    `sasl` enables SASL support.
+    You'll also want to set `nick`, `userName`, and `password` for authentication.
+
+    `stripColors` removes mIRC colors (0x03 followed by one or two ASCII numbers for the foreground and background color), as well as ircII "effect" codes (``0x02`` bold, ``0x1f`` underline, ``0x16`` reverse, ``0x0f`` reset) from the message before parsing it.
+
+    `messageSplit` will split up large messages sent with the `say` method into multiple messages of lengths shorter than `messageSplit` bytes, attempting to split at whitespace where possible.
+
+    `encoding` specifies the encoding for the bot to convert messages to.
+    To disable this, leave the value blank or false.
+    Example values are ``UTF-8`` and ``ISO-8859-15``.
 
     `enableStrictParse` will make the client try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
 
