@@ -89,6 +89,10 @@ test('joins, parts, renicks and quits', function(t) {
     });
 });
 
+test.skip('client sends both case-preserving and case-lowered events for cased channels');
+
+test.skip('client handles self-events properly');
+
 var withKickSetup = function(t, client, mock, performKicks, onMockClose) {
     // onMockClose receives a parameter of the number of joins that occurred.
     mock.server.on('connection', function() { mock.greet(); });
@@ -120,7 +124,7 @@ var withKickSetup = function(t, client, mock, performKicks, onMockClose) {
     });
 };
 
-test ('does not rejoin after kick when config disabled', function(t) {
+test('client does not rejoin after kick when config disabled', function(t) {
     var mock = testHelpers.MockIrcd();
     var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: false});
 
@@ -132,7 +136,7 @@ test ('does not rejoin after kick when config disabled', function(t) {
     });
 });
 
-test ('rejoins when kicked', function(t) {
+test('client rejoins when kicked with config enabled', function(t) {
     var mock = testHelpers.MockIrcd();
     var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: true});
 
@@ -144,7 +148,7 @@ test ('rejoins when kicked', function(t) {
     });
 });
 
-test ('only rejoins when self kicked', function(t) {
+test('client only rejoins when self kicked', function(t) {
     var mock = testHelpers.MockIrcd();
     var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: true});
 
@@ -155,3 +159,7 @@ test ('only rejoins when self kicked', function(t) {
         t.end();
     });
 });
+
+test.skip('client handles PRIVMSGs properly');
+
+test.skip('client handles INVITEs properly');
