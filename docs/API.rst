@@ -49,9 +49,8 @@ Client
 
     `debug` will output timestamped messages to the console using `util.log` when certain events are fired. If this is true, it will override `showErrors`.
 
-    `showErrors` will output timestamped errors to the console using `util.log`, such as when certain IRC responses are encountered or an attempt to find the message charset fails. If `debug` is true, it will override this.
-
-    `autoRejoin` has the client rejoin channels after being kicked.
+    `showErrors` will output timestamped errors to the console using `util.log`, such as when certain IRC responses are encountered or an attempt to find the message charset fails.
+    If `debug` is true, it will override this.
 
     `autoConnect` has the client connect when instantiated.
     If disabled, you will need to call ``connect()`` on the client instance::
@@ -59,11 +58,23 @@ Client
         var client = new irc.Client({ autoConnect: false, ... });
         client.connect();
 
+    `autoRejoin` has the client rejoin channels after being kicked.
+    See `retryCount` and `retryDelay` to configure.
+
     `retryCount` is the number of times the client will try to automatically reconnect when disconnected.
     It defaults to 0.
 
     `retryDelay` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected.
-    It defaults to 2000.
+    It defaults to 2000ms (2 seconds).
+
+    `autoRenick` has the client attempt to renick to its configured nickname if it can't originally join with it (due to nickname clash).
+    See `renickCount` and `renickDelay` to configure.
+
+    `renickCount` is the number of times the client will try to automatically renick (reset each time it connects).
+    It defaults to 0 (meaning infinite retry).
+
+    `renickDelay` is the number of milliseconds to wait before retrying to automatically renick.
+    It defaults to 60,000ms (60 seconds).
 
     `secure` (SSL connection) can be a true value or an object (the kind returned by ``crypto.createCredentials()``) specifying the certificate and other details for validation.
     If you set `selfSigned` to true, it will accept certificates from a non-trusted CA.
