@@ -22,18 +22,21 @@ Client
             port: 6667,
             localAddress: null,
             debug: false,
+            channels: [],
             showErrors: false,
             autoRejoin: false,
+            autoRenick: false,
             autoConnect: true,
-            channels: [],
+            retryCount: 0,
+            retryDelay: 2000,
+            renickCount: 0,
+            renickDelay: 60000,
             secure: false,
             selfSigned: false,
             certExpired: false,
             floodProtection: false,
             floodProtectionDelay: 1000,
             sasl: false,
-            retryCount: 0,
-            retryDelay: 2000,
             stripColors: false,
             channelPrefixes: "&#",
             messageSplit: 512,
@@ -41,11 +44,41 @@ Client
             enableStrictParse: false
         }
 
+
+    `localAddress` is the address to bind to when connecting.
+
+    `debug` will output timestamped messages to the console using `util.log` when certain events are fired. If this is true, it will override `showErrors`.
+
+    `showErrors` will output timestamped errors to the console using `util.log`, such as when certain IRC responses are encountered or an attempt to find the message charset fails.
+    If `debug` is true, it will override this.
+
+    `autoConnect` has the client connect when instantiated.
+    If disabled, you will need to call ``connect()`` on the client instance::
+
+        var client = new irc.Client({ autoConnect: false, ... });
+        client.connect();
+
+    `autoRejoin` has the client rejoin channels after being kicked.
+    See `retryCount` and `retryDelay` to configure.
+
+    `retryCount` is the number of times the client will try to automatically reconnect when disconnected.
+    It defaults to 0.
+
+    `retryDelay` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected.
+    It defaults to 2000ms (2 seconds).
+
+    `autoRenick` has the client attempt to renick to its configured nickname if it can't originally join with it (due to nickname clash).
+    See `renickCount` and `renickDelay` to configure.
+
+    `renickCount` is the number of times the client will try to automatically renick (reset each time it connects).
+    It defaults to 0 (meaning infinite retry).
+
+    `renickDelay` is the number of milliseconds to wait before retrying to automatically renick.
+    It defaults to 60,000ms (60 seconds).
+
     `secure` (SSL connection) can be a true value or an object (the kind returned by ``crypto.createCredentials()``) specifying the certificate and other details for validation.
     If you set `selfSigned` to true, it will accept certificates from a non-trusted CA.
     If you set `certExpired` to true, the bot will accept expired certificates.
-
-    `localAddress` is the address to bind to when connecting.
 
     `floodProtection` queues all your messages and slowly transmits them to prevent being kicked for flooding.
     Alternatively, use `Client.activateFloodProtection()` to activate flood protection after instantiating the client.
@@ -62,24 +95,6 @@ Client
     `encoding` specifies the encoding for the bot to convert messages to.
     To disable this, leave the value blank or false.
     Example values are ``UTF-8`` and ``ISO-8859-15``.
-
-    `debug` will output timestamped messages to the console using `util.log` when certain events are fired. If this is true, it will override `showErrors`.
-
-    `showErrors` will output timestamped errors to the console using `util.log`, such as when certain IRC responses are encountered or an attempt to find the message charset fails. If `debug` is true, it will override this.
-
-    `autoRejoin` has the client rejoin channels after being kicked.
-
-    `autoConnect` has the client connect when instantiated.
-    If disabled, you will need to call ``connect()`` on the client instance::
-
-        var client = new irc.Client({ autoConnect: false, ... });
-        client.connect();
-
-    `retryCount` is the number of times the client will try to automatically reconnect when disconnected.
-    It defaults to 0.
-
-    `retryDelay` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected.
-    It defaults to 2000.
 
     `enableStrictParse` will make the client try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
 
