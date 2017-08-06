@@ -68,6 +68,7 @@ Client
     It defaults to 2000ms (2 seconds).
 
     `autoRenick` has the client attempt to renick to its configured nickname if it can't originally join with it (due to nickname clash).
+    Only takes effect when the client receives a `err_nicknameinuse` message – if disabled after this point, will not cancel the effect.
     See `renickCount` and `renickDelay` to configure.
 
     `renickCount` is the number of times the client will try to automatically renick (reset each time it connects).
