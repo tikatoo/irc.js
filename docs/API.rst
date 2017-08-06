@@ -484,7 +484,7 @@ Events
 
     `function (exception) { }`
 
-    Emitted when the socket connection to the server emits and error event.
+    Emitted when the socket connection to the server emits an error event.
     See `net.Socket's error event <https://nodejs.org/api/net.html#net_event_error_1>`_ for more information.
 
 .. js:data:: 'unhandled'
