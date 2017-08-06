@@ -233,7 +233,7 @@ test('bot does not renick if it finds it has renicked in the meantime', function
         var receivedNick = false;
         var mustReceiveNick = function(oldNick, newNick) {
             t.equal(oldNick, 'testbot1');
-            t.equal(newNick, 'testbot');
+            t.equal(newNick, 'testbot2');
             t.equal(client.conn.renickInterval, null);
             receivedNick = true;
         };
@@ -243,13 +243,49 @@ test('bot does not renick if it finds it has renicked in the meantime', function
                 client.removeListener('raw', handler);
                 t.ok(client.conn.renickInterval);
                 client.once('nick', mustReceiveNick);
-                mock.send(':testbot1!~testbot@mockhost.com NICK :testbot\r\n');
+                mock.send(':testbot1!~testbot@mockhost.com NICK :testbot2\r\n');
             }
         });
 
         mock.on('end', function() {
             t.deepEqual(actual, expected, 'bot must send right nick commands');
             t.ok(receivedNick, 'bot must be renicked by server');
+            t.equal(client.conn.renickInterval, null);
+            mock.close(function() {
+                t.end();
+            });
+        });
+    }, { autoRenick: true, renickDelay: 50, renickCount: 3 });
+});
+
+test('bot does not renick if it finds it has the right nick', function(t){
+    withClient(function(obj) {
+        var client = obj.client;
+        var mock = obj.mock;
+        var expected = [
+            'NICK testbot',
+            'NICK testbot1'
+        ];
+        var actual = [];
+
+        setupStandardRenickTest(t, obj, expected, actual);
+
+        client.on('registered', function() {
+            t.ok(client.conn.renickInterval);
+        });
+
+        client.addListener('raw', function handler(message) {
+            if (message.command === 'err_nicknameinuse') {
+                client.removeListener('raw', handler);
+                t.ok(client.conn.renickInterval);
+                client.opt.nick = 'testbot1';
+            }
+        });
+
+        mock.on('end', function() {
+            t.deepEqual(actual, expected, 'bot must send right nick commands');
+            t.equal(client.nick, 'testbot1');
+            t.equal(client.opt.nick, 'testbot1');
             t.equal(client.conn.renickInterval, null);
             mock.close(function() {
                 t.end();
