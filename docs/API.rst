@@ -69,6 +69,7 @@ Client
 
     `autoRenick` has the client attempt to renick to its configured nickname if it can't originally join with it (due to nickname clash).
     Only takes effect when the client receives a `err_nicknameinuse` message – if disabled after this point, will not cancel the effect.
+    See `cancelAutoRenick` to cancel a current renick attempt.
     See `renickCount` and `renickDelay` to configure.
 
     `renickCount` is the number of times the client will try to automatically renick (reset each time it connects).
@@ -190,6 +191,11 @@ Client
     You can also use the `floodProtection` option while instantiating the client to enable flood protection then; see also `floodProtectionDelay` to set the message interval.
 
     :param integer interval: an optional configuration for amount of time to wait between messages, defaults to client configuration value
+
+.. js:function:: Client.cancelAutoRenick()
+
+    Cancels the current auto-renick event; see the `autoRenick` config option for more details.
+    Returns the interval object, if it existed.
 
 Events
 ------
