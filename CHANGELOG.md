@@ -1,5 +1,39 @@
 # Change Log
 
+## [v0.7.0](https://github.com/Throne3d/node-irc/tree/v0.7.0) (2017-08-06)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.6.2...v0.7.0)
+
+**New features:**
+
+- Add auto-renick functionality, to renick to config nickname if the bot receives an `err_nicknameinuse` event and the `autoRenick` config option is enabled (relatedly: add a `cancelAutoRenick` method) – fixes [#15](https://github.com/Throne3d/node-irc/issues/15)
+- Disallow `connect()` when already connected (output to stderr and ignore)
+- Likewise disallow `disconnect()` when already disconnected
+- Add new `unhandled` event for when a message is received that isn't handled internally (not handled otherwise, not recognized as an error)
+- Debug when line received from server
+- Debug on ping timer start and stop
+
+**Fixed bugs:**
+- Flag code 477 as an error (`ERR_NOCHANMODES` or `ERR_NEEDREGGEDNICK`, not given a human-readable name due to ambiguity) – fixes [#19](https://github.com/Throne3d/node-irc/issues/19)
+- Only autorejoin when the client itself is kicked; add tests for autorejoin
+- Emit the `error` event after the output more consistently
+- Add test for strict parsing mode
+- Add test for CyclingPingTimer
+- Reduce chance of random failure in tests (by not initializing a server when we disconnect the client without any server interaction)
+- Debug CyclingPingTimer to stdout instead of stderr
+- Run linting in `posttest` phase
+
+**Misc:**
+- Add code coverage using `nyc` and `coveralls`
+- Rename `test-433-before-001` to `test-nickinuse-before-welcome`; move some fixtures into the test itself
+- Reword some tests, add *skeleton* for more tests (hopefully these will be implemented soon)
+- Docs: Update CONTRIBUTING.md to reflect fork
+- Docs: Reorder events and methods in documentation to hopefully be more relevantly grouped
+- Docs: Update `whois` example
+- Docs: Clean up some comments in the code
+- Docs: Add `netError` event (emitted when the socket connection to the server emits an error event – see [net.Socket](https://nodejs.org/api/net.html#net_event_error_1) for more details)
+- Docs: Fix some typos
+- Docs: Reorder config options to have the order match between the object and the later paragraphs
+
 ## [v0.6.2](https://github.com/Throne3d/node-irc/tree/v0.6.2) (2017-07-16)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.6.1...v0.6.2)
 
