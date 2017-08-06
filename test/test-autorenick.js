@@ -22,8 +22,6 @@ test('bot does not try to renick when it gets the chosen nickname', function(t) 
     }, { autoRenick: true });
 });
 
-// TODO: reduce code duplication
-
 test('bot renicks automatically when config enabled', function(t) {
     withClient(function(obj) {
         var client = obj.client;
@@ -99,11 +97,36 @@ test('bot renicks automatically when config enabled', function(t) {
     }, { autoRenick: true, renickDelay: 300 });
 });
 
+var setupStandardRenickTest = function(t, obj, expected, actual) {
+    var client = obj.client;
+    var mock = obj.mock;
+    t.timeoutAfter(1000);
+
+    var rebuked = false;
+    mock.on('line', function(line) {
+        var args = line.split(' ');
+        if (args[0] !== 'NICK') return;
+
+        // ensure bot sends right nick commands
+        actual.push(line);
+        if (args[1] === 'testbot') {
+            if (!rebuked) {
+                rebuked = true;
+                mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
+            }
+        }
+        if (expected.length === actual.length) {
+            setTimeout(function() {
+                client.disconnect();
+            }, 200);
+        }
+    });
+};
+
 test('bot renicks given amount', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
-        t.timeoutAfter(1000);
         var expected = [
             'NICK testbot',
             'NICK testbot1',
@@ -113,25 +136,7 @@ test('bot renicks given amount', function(t) {
         ];
         var actual = [];
 
-        var rebuked = false;
-        mock.on('line', function(line) {
-            var args = line.split(' ');
-            if (args[0] !== 'NICK') return;
-
-            // ensure bot sends right nick commands
-            actual.push(line);
-            if (args[1] === 'testbot') {
-                if (!rebuked) {
-                    rebuked = true;
-                    mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
-                }
-            }
-            if (expected.length === actual.length) {
-                setTimeout(function() {
-                    client.disconnect();
-                }, 200);
-            }
-        });
+        setupStandardRenickTest(t, obj, expected, actual);
 
         client.on('registered', function() {
             t.ok(client.conn.renickInterval);
@@ -151,32 +156,13 @@ test('bot only renicks if config enabled', function(t) {
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
-        t.timeoutAfter(1000);
         var expected = [
             'NICK testbot',
             'NICK testbot1'
         ];
         var actual = [];
 
-        var rebuked = false;
-        mock.on('line', function(line) {
-            var args = line.split(' ');
-            if (args[0] !== 'NICK') return;
-
-            // ensure bot sends right nick commands
-            actual.push(line);
-            if (args[1] === 'testbot') {
-                if (!rebuked) {
-                    rebuked = true;
-                    mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
-                }
-            }
-            if (expected.length === actual.length) {
-                setTimeout(function() {
-                    client.disconnect();
-                }, 200);
-            }
-        });
+        setupStandardRenickTest(t, obj, expected, actual);
 
         client.on('registered', function() {
             t.equal(typeof client.conn.renickInterval, 'undefined');
@@ -195,7 +181,6 @@ test('bot does not renick if config enabled and nickinuse handler calls cancelAu
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
-        t.timeoutAfter(1000);
         var expected = [
             'NICK testbot',
             'NICK testbot1',
@@ -203,25 +188,7 @@ test('bot does not renick if config enabled and nickinuse handler calls cancelAu
         ];
         var actual = [];
 
-        var rebuked = false;
-        mock.on('line', function(line) {
-            var args = line.split(' ');
-            if (args[0] !== 'NICK') return;
-
-            // ensure bot sends right nick commands
-            actual.push(line);
-            if (args[1] === 'testbot') {
-                if (!rebuked) {
-                    rebuked = true;
-                    mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
-                }
-            }
-            if (expected.length === actual.length) {
-                setTimeout(function() {
-                    client.disconnect();
-                }, 200);
-            }
-        });
+        setupStandardRenickTest(t, obj, expected, actual);
 
         client.on('registered', function() {
             t.ok(client.conn.renickInterval);
@@ -251,32 +218,13 @@ test('bot does not renick if it finds it has renicked in the meantime', function
     withClient(function(obj) {
         var client = obj.client;
         var mock = obj.mock;
-        t.timeoutAfter(1000);
         var expected = [
             'NICK testbot',
             'NICK testbot1'
         ];
         var actual = [];
 
-        var rebuked = false;
-        mock.on('line', function(line) {
-            var args = line.split(' ');
-            if (args[0] !== 'NICK') return;
-
-            // ensure bot sends right nick commands
-            actual.push(line);
-            if (args[1] === 'testbot') {
-                if (!rebuked) {
-                    rebuked = true;
-                    mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
-                }
-            }
-            if (expected.length === actual.length) {
-                setTimeout(function() {
-                    client.disconnect();
-                }, 200);
-            }
-        });
+        setupStandardRenickTest(t, obj, expected, actual);
 
         client.on('registered', function() {
             t.ok(client.conn.renickInterval);
