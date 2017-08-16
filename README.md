@@ -123,6 +123,6 @@ Further documentation (including a complete API reference) is available in reStr
 
 If you find any issues with the documentation (or the module) please send a pull request or file an issue and we'll do our best to accommodate.
 
-**Outdated:**
+You can visit us on our Gitter (found [here](https://gitter.im/node-irc)) to discuss issues you're having with the library, pull requests, or anything else related to node-irc.
 
-You can also visit us on ##node-irc on freenode to discuss issues you're having with the library, pull requests, or anything else related to node-irc.
+If you want to, you can connect to Gitter with your standard IRC client – instructions [here](https://irc.gitter.im/).
