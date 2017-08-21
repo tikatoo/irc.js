@@ -199,8 +199,7 @@ Client
 
 .. js:function:: Client.canConvertEncoding()
 
-    Tests if the client can convert messages with different encodings, using the `node-icu-charset-detector` and `iconv` libraries.
-    Allows you to more easily (programmatically) detect if the `encoding` option will result in any effect, instead of setting it and otherwise resulting in errors.
+    Calls the exported function `irc.canConvertEncoding()`.
 
 Events
 ------
@@ -542,6 +541,15 @@ Colors
             light_gray: '\u000315',
             reset: '\u000f',
         }
+
+canConvertEncoding
+------
+
+.. js:function:: irc.canConvertEncoding()
+
+    Tests if the library can convert messages with different encodings, using the `node-icu-charset-detector` and `iconv` libraries.
+    Allows you to more easily (programmatically) detect if the `encoding` option will result in any effect, instead of setting it and otherwise resulting in errors.
+    (See also `Client.canConvertEncoding`, an alias for this function.)
 
 Internal
 ------
