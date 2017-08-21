@@ -67,17 +67,24 @@ mockIconvIconv.prototype.convert = function(str) {
 var mockIconv = {Iconv: mockIconvIconv};
 
 test('canConvertEncoding returns false when required modules don\'t load', function(t) {
-    t.plan(2);
+    t.plan(4);
+    var client;
 
     var ircWithoutCharsetDetector = proxyquire('../lib/irc', { 'node-icu-charset-detector': null, iconv: mockIconv });
+    client = new ircWithoutCharsetDetector.Client('localhost', 'nick', {autoConnect: false});
     t.equal(ircWithoutCharsetDetector.canConvertEncoding(), false, 'canConvertEncoding must be false without node-icu-charset-detector');
+    t.equal(client.canConvertEncoding(), false, 'Client.canConvertEncoding must be false without node-icu-charset-detector');
 
     var ircWithoutIconv = proxyquire('../lib/irc', { 'node-icu-charset-detector': mockCharsetDetector, iconv: null });
+    client = new ircWithoutCharsetDetector.Client('localhost', 'nick', {autoConnect: false});
     t.equal(ircWithoutIconv.canConvertEncoding(), false, 'canConvertEncoding must be false without iconv');
+    t.equal(client.canConvertEncoding(), false, 'Client.canConvertEncoding must be false without iconv');
 });
 
 test('canConvertEncoding returns true when convertEncoding works with test data', function(t) {
-    t.plan(1);
+    t.plan(2);
     var ircWithRequires = proxyquire('../lib/irc', { 'node-icu-charset-detector': mockCharsetDetector, iconv: mockIconv });
+    var client = new ircWithRequires.Client('localhost', 'nick', {autoConnect: false});
     t.equal(ircWithRequires.canConvertEncoding(), true, 'canConvertEncoding must be true with functioning modules');
+    t.equal(client.canConvertEncoding(), true, 'Client.canConvertEncoding must be true with functioning modules');
 });
