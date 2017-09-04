@@ -22,8 +22,8 @@ Client
             port: 6667,
             localAddress: null,
             debug: false,
-            channels: [],
             showErrors: false,
+            channels: [],
             autoRejoin: false,
             autoRenick: false,
             autoConnect: true,
@@ -37,10 +37,17 @@ Client
             floodProtection: false,
             floodProtectionDelay: 1000,
             sasl: false,
+            webirc: {
+              pass: '',
+              ip: '',
+              host: ''
+            },
             stripColors: false,
             channelPrefixes: "&#",
             messageSplit: 512,
-            encoding: '',
+            encoding: false,
+            millisecondsOfSilenceBeforePingSent: 15 * 1000,
+            millisecondsBeforePingTimeout: 8 * 1000,
             enableStrictParse: false
         }
 
@@ -51,6 +58,8 @@ Client
 
     `showErrors` will output timestamped errors to the console using `util.log`, such as when certain IRC responses are encountered or an attempt to find the message charset fails.
     If `debug` is true, it will override this.
+
+    `channels` is an array of channels to join on connect.
 
     `autoConnect` has the client connect when instantiated.
     If disabled, you will need to call ``connect()`` on the client instance::
@@ -90,6 +99,8 @@ Client
     `sasl` enables SASL support.
     You'll also want to set `nick`, `userName`, and `password` for authentication.
 
+    `webirc` is an object that contains WEBIRC credentials (if applicable).
+
     `stripColors` removes mIRC colors (0x03 followed by one or two ASCII numbers for the foreground and background color), as well as ircII "effect" codes (``0x02`` bold, ``0x1f`` underline, ``0x16`` reverse, ``0x0f`` reset) from the message before parsing it.
 
     `messageSplit` will split up large messages sent with the `say` method into multiple messages of lengths shorter than `messageSplit` bytes, attempting to split at whitespace where possible.
@@ -97,6 +108,10 @@ Client
     `encoding` specifies the encoding for the bot to convert messages to.
     To disable this, leave the value blank or false.
     Example values are ``UTF-8`` and ``ISO-8859-15``.
+
+    `millisecondsOfSilenceBeforePingSent` controls the amount of time the ping timer will wait before sending a ping request.
+
+    `millisecondsBeforePingTimeout` controls the amount of time the ping timer will wait after sending a ping request before the bot receives a ``pingTimeout`` event.
 
     `enableStrictParse` will make the client try to conform more strictly to `the RFC 2812 standard <https://www.ietf.org/rfc/rfc2812.txt>`_ for parsing nicknames, preventing eg CJK characters from appearing in them.
 
