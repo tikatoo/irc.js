@@ -542,7 +542,7 @@ Colors
             reset: '\u000f',
         }
 
-canConvertEncoding
+Encoding
 ------
 
 .. js:function:: irc.canConvertEncoding()
