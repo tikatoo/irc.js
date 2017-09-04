@@ -45,7 +45,7 @@ Client
             stripColors: false,
             channelPrefixes: "&#",
             messageSplit: 512,
-            encoding: false,
+            encoding: null,
             millisecondsOfSilenceBeforePingSent: 15 * 1000,
             millisecondsBeforePingTimeout: 8 * 1000,
             enableStrictParse: false
