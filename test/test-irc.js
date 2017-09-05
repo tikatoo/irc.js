@@ -190,4 +190,3 @@ test.skip('client.action');
 test.skip('client.notice');
 test.skip('client.whois');
 test.skip('client handles CTCP');
-test.skip('client.out');
