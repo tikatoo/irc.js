@@ -7,6 +7,7 @@ var tls = require('tls');
 var util = require('util');
 var irc = require('../lib/irc');
 var EventEmitter = require('events').EventEmitter;
+var sinon = require('sinon');
 
 var MockIrcd = function(port, encoding, isSecure) {
     var self = this;
@@ -120,14 +121,32 @@ module.exports.withClient = function withClient(func, givenConf) {
     func(obj);
 };
 
-function setupMocks(callback) {
+function setupMocks(config, callback) {
+  // config.client gets merged into irc.Client config
+  // config.meta:
+  // - autoGreet (default true): automatically greets client on connection
+  // - callbackEarly (default false): calls callback on server connection instead of client registered event
+  if (typeof callback === 'undefined' && typeof config === 'function') { callback = config; config = undefined; }
+  config = config || {};
+  config.meta = config.meta || {};
+  config.client = config.client || {};
+
+  var metaConfig = Object.assign({autoGreet: true, callbackEarly: false}, config.meta);
+  var clientConfig = Object.assign({debug: true}, config.client);
+
+  var lineSpy = sinon.spy();
   var mock = module.exports.MockIrcd();
-  var client = new irc.Client('localhost', 'testbot', {debug: true});
+  mock.on('line', lineSpy);
+  var client = new irc.Client('localhost', 'testbot', clientConfig);
+  var mockObj = {mock: mock, client: client, lineSpy: lineSpy};
+
   mock.server.on('connection', function() {
-    mock.greet();
+    if (metaConfig.autoGreet) mock.greet();
+    if (metaConfig.callbackEarly) callback(mockObj);
   });
-  var mockObj = {mock: mock, client: client};
-  client.on('registered', function() { callback(mockObj); });
+  client.on('registered', function() {
+    if (!metaConfig.callbackEarly) callback(mockObj);
+  });
   return mockObj;
 }
 module.exports.setupMocks = setupMocks;
@@ -142,7 +161,7 @@ function itWithCustomMock(msg, config, body) {
   it(msg, function(done) {
     // (teardown) => start => processBody => after
     function start() {
-      setupMocks(processBody);
+      setupMocks(config, processBody);
     }
     function after() {
       teardownMocks({client: this.client, mock: this.mock}, done);
@@ -150,6 +169,7 @@ function itWithCustomMock(msg, config, body) {
     function processBody(mockObj) {
       this.client = mockObj.client;
       this.mock = mockObj.mock;
+      this.lineSpy = mockObj.lineSpy;
       // handle tests that don't claim to be async
       if (body.length > 0) {
         body(after);
@@ -167,11 +187,16 @@ function itWithCustomMock(msg, config, body) {
 }
 module.exports.itWithCustomMock = itWithCustomMock;
 
-module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach) {
+module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach, config) {
+  config = config || {};
   beforeEach(function(done) {
-    var mocks = setupMocks(function() { done(); });
-    this.mock = mocks.mock;
-    this.client = mocks.client;
+    var self = this;
+    setupMocks(config, function(mocks) {
+      for (var key in mocks) {
+        self[key] = mocks[key];
+      }
+      done();
+    });
   });
 
   afterEach(function(done) {

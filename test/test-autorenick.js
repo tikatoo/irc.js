@@ -1,295 +1,281 @@
-var test = require('tape');
-
 var testHelpers = require('./helpers');
-var withClient = testHelpers.withClient;
+var itWithCustomMock = testHelpers.itWithCustomMock;
+var chai = require('chai');
+var sinon = require('sinon');
+var expect = chai.expect;
 
-test('bot does not try to renick when it gets the chosen nickname', function(t) {
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
+describe('Client', function() {
+  describe('autoRenick', function() {
+    context('with config disabled', function() {
+      var clientConfig = {autoRenick: false, renickDelay: 300};
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
 
-        mock.server.on('connection', function() { mock.greet(); });
-
-        client.on('registered', function() {
-            t.equal(typeof client.conn.renickInterval, 'undefined');
-            client.disconnect();
+      context('when it does not get the desired nickname', function() {
+        it('does not plan to renick', function() {
+          expect(this.client.conn.renickInterval).to.be.undefined;
         });
 
-        client.conn.once('close', function() {
-            client.end();
-            t.end();
+        itWithCustomMock('does not send renick',
+        {client: clientConfig, meta: {callbackEarly: true}},
+        function(done) {
+          var lineSpy = this.lineSpy;
+          setTimeout(function() {
+            var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
+            expect(nickSpy.calledOnce).to.be.true;
+            expect(nickSpy.calledWithExactly('NICK testbot')).to.be.true;
+            done();
+          }, 500);
         });
-    }, { autoRenick: true });
-});
-
-test('bot renicks automatically when config enabled', function(t) {
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
-        t.timeoutAfter(1000);
-        var expected = [
-            'NICK testbot',
-            'NICK testbot1',
-            'NICK testbot2',
-            'NICK testbot'
-        ];
-        var actual = [];
-
-        var mustNotRenickEarly = function(line) {
-            if (line === 'NICK testbot') {
-                t.fail('bot must not renick early');
-            }
-        };
-
-        var renicked = false;
-        var mustRenick = function(line) {
-            if (line === 'NICK testbot') {
-                renicked = true;
-            }
-        };
-
-        var rebuked = false;
-        mock.on('line', function(line) {
-            var args = line.split(' ');
-            if (args[0] !== 'NICK') return;
-
-            // ensure bot sends right nick commands
-            actual.push(line);
-            if (args[1] === 'testbot') {
-                if (!rebuked) {
-                    rebuked = true;
-                    mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
-
-                    // expect the bot not to nick back for 250ms
-                    mock.addListener('line', mustNotRenickEarly);
-                    setTimeout(function(){
-                        mock.removeListener('line', mustNotRenickEarly);
-                    }, 250);
-                    mock.on('line', mustRenick);
-                } else {
-                    mock.send(':testbot2!~testbot@mockhost.com NICK :testbot\r\n');
-                }
-            } else if (args[1] === 'testbot1') {
-                mock.send(':localhost 433 * testbot1 :Nickname is already in use.\r\n');
-            } else if (args[1] === 'testbot2') {
-                mock.greet('testbot2');
-            }
-        });
-
-        client.on('registered', function() {
-            t.ok(client.conn.renickInterval);
-        });
-
-        client.on('nick', function(oldnick, newnick) {
-            if (oldnick === 'testbot2' && newnick === 'testbot') {
-                t.pass('bot renicked');
-                client.disconnect();
-            }
-        });
-
-        mock.on('end', function() {
-            t.deepEqual(actual, expected, 'bot must send right nick commands');
-            t.ok(renicked, 'bot must try to renick');
-            mock.close(function() {
-                t.end();
-            });
-        });
-    }, { autoRenick: true, renickDelay: 300 });
-});
-
-var setupStandardRenickTest = function(t, obj, expected, actual) {
-    var client = obj.client;
-    var mock = obj.mock;
-    t.timeoutAfter(1000);
-
-    var rebuked = false;
-    mock.on('line', function(line) {
-        var args = line.split(' ');
-        if (args[0] !== 'NICK') return;
-
-        // ensure bot sends right nick commands
-        actual.push(line);
-        if (args[1] === 'testbot') {
-            if (!rebuked) {
-                rebuked = true;
-                mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
-            }
-        }
-        if (expected.length === actual.length) {
-            setTimeout(function() {
-                client.disconnect();
-            }, 200);
-        }
+      });
     });
-};
 
-test('bot renicks given amount', function(t) {
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
-        var expected = [
-            'NICK testbot',
-            'NICK testbot1',
-            'NICK testbot',
-            'NICK testbot',
-            'NICK testbot'
-        ];
-        var actual = [];
+    context('with config enabled', function() {
+      context('when it gets the desired nickname', function() {
+        var clientConfig = {autoRenick: true, renickDelay: 300};
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
 
-        setupStandardRenickTest(t, obj, expected, actual);
-
-        client.on('registered', function() {
-            t.ok(client.conn.renickInterval);
+        it('does not plan to renick', function() {
+          expect(this.client.conn.renickInterval).to.be.undefined;
         });
 
-        mock.on('end', function() {
-            t.deepEqual(actual, expected, 'bot must send right nick commands');
-            t.equal(client.conn.renickInterval, null);
-            mock.close(function() {
-                t.end();
+        it('does not send renick', function(done) {
+          var lineSpy = this.lineSpy;
+          setTimeout(function() {
+            var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
+            expect(nickSpy.calledOnce).to.be.true;
+            expect(nickSpy.calledWithExactly('NICK testbot')).to.be.true;
+            done();
+          }, 400);
+        });
+      });
+
+      context('when it does not get the desired nickname', function() {
+        context('longer tests', function() {
+          var clientConfig = {autoRenick: true, renickDelay: 300};
+          testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: {callbackEarly: true, autoGreet: false}});
+
+          function defaultRenickTest(local, onRegister) {
+            var rebuked = false;
+            var mock = local.mock;
+            var client = local.client;
+            mock.on('line', function(line) {
+              var args = line.split(' ');
+              if (args[0] !== 'NICK') return;
+              if (args[1] === 'testbot') {
+                if (!rebuked) {
+                  rebuked = true;
+                  mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
+                } else {
+                  mock.send(':testbot2!~testbot@mockhost.com NICK :testbot\r\n');
+                }
+              } else if (args[1] === 'testbot1') {
+                mock.send(':localhost 433 * testbot1 :Nickname is already in use.\r\n');
+              } else if (args[1] === 'testbot2') {
+                mock.greet('testbot2');
+              }
             });
-        });
-    }, { autoRenick: true, renickDelay: 50, renickCount: 3 });
-});
-
-test('bot only renicks if config enabled', function(t) {
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
-        var expected = [
-            'NICK testbot',
-            'NICK testbot1'
-        ];
-        var actual = [];
-
-        setupStandardRenickTest(t, obj, expected, actual);
-
-        client.on('registered', function() {
-            t.equal(typeof client.conn.renickInterval, 'undefined');
-        });
-
-        mock.on('end', function() {
-            t.deepEqual(actual, expected, 'bot must send right nick commands');
-            mock.close(function() {
-                t.end();
+            client.on('registered', function() {
+              if (onRegister) onRegister();
             });
-        });
-    }, { autoRenick: false, renickDelay: 50, renickCount: 3 });
-});
+          }
 
-test('bot does not renick if config enabled and nickinuse handler calls cancelAutoRenick', function(t) {
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
-        var expected = [
-            'NICK testbot',
-            'NICK testbot1',
-            'NICK testbot'
-        ];
-        var actual = [];
+          it('attains suitable fallback', function(done) {
+            var client = this.client;
+            var lineSpy = this.lineSpy;
+            defaultRenickTest(this, function onRegistered() {
+              var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
+              expect(nickSpy.args).to.deep.equal([
+                ['NICK testbot'],
+                ['NICK testbot1'],
+                ['NICK testbot2']
+              ]);
+              expect(client.nick).to.eq('testbot2');
+              done();
+            });
+          });
 
-        setupStandardRenickTest(t, obj, expected, actual);
+          it('plans to renick', function(done) {
+            var client = this.client;
+            defaultRenickTest(this, function onRegistered() {
+              expect(client.conn.renickInterval).to.be.ok;
+              done();
+            });
+          });
 
-        client.on('registered', function() {
-            t.ok(client.conn.renickInterval);
-        });
+          it('does not renick early', function(done) {
+            var lineSpy = this.lineSpy;
+            defaultRenickTest(this, function onRegistered() {
+              setTimeout(function() {
+                var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
+                expect(nickSpy.args).to.deep.equal([
+                  ['NICK testbot'],
+                  ['NICK testbot1'],
+                  ['NICK testbot2']
+                ]);
+                done();
+              }, 250);
+            });
+          });
 
-        client.addListener('raw', function handler(message) {
-            if (message.command === 'err_nicknameinuse') {
-                client.removeListener('raw', handler);
+          it('renicks', function(done) {
+            var lineSpy = this.lineSpy;
+            defaultRenickTest(this, function onRegistered() {
+              setTimeout(function() {
+                var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
+                expect(nickSpy.args).to.deep.equal([
+                  ['NICK testbot'],
+                  ['NICK testbot1'],
+                  ['NICK testbot2'],
+                  ['NICK testbot']
+                ]);
+                done();
+              }, 350);
+            });
+          });
+
+          it('stops renicking when it gets its nickname', function(done) {
+            var client = this.client;
+            var lineSpy = this.lineSpy;
+            defaultRenickTest(this, function onRegistered() {
+              client.on('nick', function(oldNick, newNick) {
+                if (oldNick !== 'testbot2' || newNick !== 'testbot') return;
+                expect(client.nick).to.eq('testbot');
+                expect(client.conn.renickInterval).to.be.null;
+                expect(lineSpy.withArgs(sinon.match(/^NICK/i)).args).to.deep.equal([
+                  ['NICK testbot'],
+                  ['NICK testbot1'],
+                  ['NICK testbot2'],
+                  ['NICK testbot']
+                ]);
                 setTimeout(function() {
-                    client.cancelAutoRenick();
-                    t.equal(client.conn.renickInterval, null);
-                }, 75);
-            }
-        });
-
-        mock.on('end', function() {
-            t.deepEqual(actual, expected, 'bot must send right nick commands');
-            t.equal(client.conn.renickInterval, null);
-            mock.close(function() {
-                t.end();
+                  expect(lineSpy.withArgs(sinon.match(/^NICK/i)).args).to.deep.equal([
+                    ['NICK testbot'],
+                    ['NICK testbot1'],
+                    ['NICK testbot2'],
+                    ['NICK testbot']
+                  ]);
+                  done();
+                }, 350);
+              });
             });
-        });
-    }, { autoRenick: true, renickDelay: 50, renickCount: 3 });
-});
-
-test('bot does not renick if it finds it has renicked in the meantime', function(t){
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
-        var expected = [
-            'NICK testbot',
-            'NICK testbot1'
-        ];
-        var actual = [];
-
-        setupStandardRenickTest(t, obj, expected, actual);
-
-        client.on('registered', function() {
-            t.ok(client.conn.renickInterval);
+          });
         });
 
-        var receivedNick = false;
-        var mustReceiveNick = function(oldNick, newNick) {
-            t.equal(oldNick, 'testbot1');
-            t.equal(newNick, 'testbot2');
-            t.equal(client.conn.renickInterval, null);
-            receivedNick = true;
-        };
-
-        client.addListener('raw', function handler(message) {
-            if (message.command === 'err_nicknameinuse') {
-                client.removeListener('raw', handler);
-                t.ok(client.conn.renickInterval);
-                client.once('nick', mustReceiveNick);
-                mock.send(':testbot1!~testbot@mockhost.com NICK :testbot2\r\n');
-            }
-        });
-
-        mock.on('end', function() {
-            t.deepEqual(actual, expected, 'bot must send right nick commands');
-            t.ok(receivedNick, 'bot must be renicked by server');
-            t.equal(client.conn.renickInterval, null);
-            mock.close(function() {
-                t.end();
+        context('shorter tests', function() {
+          function basicRenickTest(local, expected, onFinish) {
+            var rebuked = false;
+            var mock = local.mock;
+            var nickSpy = local.lineSpy.withArgs(sinon.match(/^NICK/i));
+            mock.on('line', function(line) {
+              var args = line.split(' ');
+              if (args[0] !== 'NICK') return;
+              if (args[1] === 'testbot') {
+                if (!rebuked) {
+                  rebuked = true;
+                  mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
+                }
+              }
+              if (expected.length === nickSpy.args.length) {
+                expect(nickSpy.args).to.deep.equal(expected);
+                setTimeout(function() {
+                  expect(nickSpy.args).to.deep.equal(expected);
+                  onFinish();
+                }, 200);
+              }
             });
-        });
-    }, { autoRenick: true, renickDelay: 50, renickCount: 3 });
-});
+          }
 
-test('bot does not renick if it finds it has the right nick', function(t){
-    withClient(function(obj) {
-        var client = obj.client;
-        var mock = obj.mock;
-        var expected = [
-            'NICK testbot',
-            'NICK testbot1'
-        ];
-        var actual = [];
+          var metaConfig = {callbackEarly: true, autoGreet: false};
+          var clientConfig = {autoRenick: true, renickDelay: 50, renickCount: 3};
+          testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: metaConfig});
 
-        setupStandardRenickTest(t, obj, expected, actual);
+          it('only renicks given amount', function(done) {
+            basicRenickTest(
+              this,
+              [
+                ['NICK testbot'],
+                ['NICK testbot1'],
+                ['NICK testbot'],
+                ['NICK testbot'],
+                ['NICK testbot']
+              ],
+              done
+            );
+          });
 
-        client.on('registered', function() {
-            t.ok(client.conn.renickInterval);
-        });
-
-        client.addListener('raw', function handler(message) {
-            if (message.command === 'err_nicknameinuse') {
-                client.removeListener('raw', handler);
-                t.ok(client.conn.renickInterval);
-                client.opt.nick = 'testbot1';
-            }
-        });
-
-        mock.on('end', function() {
-            t.deepEqual(actual, expected, 'bot must send right nick commands');
-            t.equal(client.nick, 'testbot1');
-            t.equal(client.opt.nick, 'testbot1');
-            t.equal(client.conn.renickInterval, null);
-            mock.close(function() {
-                t.end();
+          it('does not renick if nickinuse handler calls cancelAutoRenick', function(done) {
+            var client = this.client;
+            client.on('raw', function handler(message) {
+              if (message.command !== 'err_nicknameinuse') return;
+              client.removeListener('raw', handler);
+              setTimeout(function() {
+                client.cancelAutoRenick();
+                expect(client.conn.renickInterval).to.be.null;
+              }, 75);
             });
+
+            basicRenickTest(
+              this,
+              [
+                ['NICK testbot'],
+                ['NICK testbot1'],
+                ['NICK testbot']
+              ],
+              function() {
+                expect(client.conn.renickInterval).to.be.null;
+                done();
+              }
+            );
+          });
+
+          it('does not renick if it renicks in the meantime', function(done) {
+            var client = this.client;
+            var mock = this.mock;
+            client.on('raw', function handler(message) {
+              if (message.command !== 'err_nicknameinuse') return;
+              client.removeListener('raw', handler);
+              expect(client.conn.renickInterval).to.be.ok;
+              mock.send(':testbot1!~testbot@mockhost.com NICK :testbot2\r\n');
+            });
+
+            basicRenickTest(
+              this,
+              [
+                ['NICK testbot'],
+                ['NICK testbot1']
+              ],
+              function() {
+                expect(client.conn.renickInterval).to.be.null;
+                done();
+              }
+            );
+          });
+
+          it('does not renick if it has its config nick changed to the temporary one', function(done) {
+            var client = this.client;
+            client.on('raw', function handler(message) {
+              if (message.command !== 'err_nicknameinuse') return;
+              client.removeListener('raw', handler);
+              expect(client.conn.renickInterval).to.be.ok;
+              client.opt.nick = 'testbot1';
+            });
+
+            basicRenickTest(
+              this,
+              [
+                ['NICK testbot'],
+                ['NICK testbot1']
+              ],
+              function() {
+                expect(client.nick).to.eq('testbot1');
+                expect(client.opt.nick).to.eq('testbot1');
+                expect(client.conn.renickInterval).to.be.null;
+                done();
+              }
+            );
+          });
         });
-    }, { autoRenick: true, renickDelay: 50, renickCount: 3 });
+      });
+    });
+  });
 });
