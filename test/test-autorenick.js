@@ -1,8 +1,8 @@
 var testHelpers = require('./helpers');
 var itWithCustomMock = testHelpers.itWithCustomMock;
 var chai = require('chai');
-var sinon = require('sinon');
 var expect = chai.expect;
+var sinon = require('sinon');
 
 describe('Client', function() {
   describe('autoRenick', function() {
