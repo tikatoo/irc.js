@@ -119,3 +119,62 @@ module.exports.withClient = function withClient(func, givenConf) {
 
     func(obj);
 };
+
+function setupMocks(callback) {
+  var mock = module.exports.MockIrcd();
+  var client = new irc.Client('localhost', 'testbot', {debug: true});
+  mock.server.on('connection', function() {
+    mock.greet();
+  });
+  var mockObj = {mock: mock, client: client};
+  client.on('registered', function() { callback(mockObj); });
+  return mockObj;
+}
+module.exports.setupMocks = setupMocks;
+
+function teardownMocks(mockObj, callback) {
+  mockObj.client.disconnect();
+  mockObj.mock.close(function() { callback(); });
+}
+module.exports.teardownMocks = teardownMocks;
+
+function itWithCustomMock(msg, config, body) {
+  it(msg, function(done) {
+    // (teardown) => start => processBody => after
+    function start() {
+      setupMocks(processBody);
+    }
+    function after() {
+      teardownMocks({client: this.client, mock: this.mock}, done);
+    }
+    function processBody(mockObj) {
+      this.client = mockObj.client;
+      this.mock = mockObj.mock;
+      // handle tests that don't claim to be async
+      if (body.length > 0) {
+        body(after);
+      } else {
+        body();
+        after();
+      }
+    }
+    if (this.client || this.mock) {
+      teardownMocks({client: this.client, mock: this.mock}, start);
+    } else {
+      start();
+    }
+  });
+}
+module.exports.itWithCustomMock = itWithCustomMock;
+
+module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach) {
+  beforeEach(function(done) {
+    var mocks = setupMocks(function() { done(); });
+    this.mock = mocks.mock;
+    this.client = mocks.client;
+  });
+
+  afterEach(function(done) {
+    teardownMocks({client: this.client, mock: this.mock}, done);
+  });
+};
