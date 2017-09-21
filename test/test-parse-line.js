@@ -33,5 +33,13 @@ describe('parseMessage', function() {
         expect(JSON.stringify(parseMessage(line, false, false))).to.equal(JSON.stringify(checks[line]));
       });
     });
+
+    it('does not crash with no prefix', function() {
+      var checks = testHelpers.getFixtures('parse-line-noprefix');
+
+      Object.keys(checks).forEach(function(line) {
+        expect(JSON.stringify(parseMessage(line, false, false))).to.equal(JSON.stringify(checks[line]));
+      });
+    });
   });
 });
