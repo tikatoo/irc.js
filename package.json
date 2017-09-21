@@ -7,7 +7,7 @@
     "lint": "eslint .",
     "posttest": "nyc report && npm run lint",
     "report": "nyc report --reporter=text-lcov | coveralls",
-    "test": "nyc --reporter=none mocha test/test-*.js"
+    "test": "nyc --reporter=none mocha test/test-*.js -- --no-exit"
   },
   "contributors": [
     "Fionn Kelleher <me@fionn.co>",

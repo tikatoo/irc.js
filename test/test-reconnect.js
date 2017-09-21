@@ -42,7 +42,6 @@ describe('Client', function() {
       context('when ended', function() {
         // when the client ends the connection (potentially unexpectedly)
         sharedExample(function(client, _conns) {
-          console.log('ending');
           client.end();
         });
       });
@@ -50,7 +49,6 @@ describe('Client', function() {
       context('when connection breaks', function() {
         // when connection breaks from server end, like connection error
         sharedExample(function(_client, conns) {
-          console.log('destroying');
           conns[conns.length-1].destroy();
         });
       });

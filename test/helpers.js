@@ -8,8 +8,11 @@ var util = require('util');
 var irc = require('../lib/irc');
 var EventEmitter = require('events').EventEmitter;
 var sinon = require('sinon');
+var proxyquire = require('proxyquire');
+var stubbedUtil = {log: function(){}};
+var ircWithStubbedOutput = proxyquire('../lib/irc', {util: stubbedUtil});
 
-var MockIrcd = function(port, encoding, isSecure) {
+var MockIrcd = function(port, encoding, isSecure, quiet) {
     var self = this;
     var connectionClass;
     var options = {};
@@ -28,7 +31,7 @@ var MockIrcd = function(port, encoding, isSecure) {
     this.encoding = encoding || 'utf-8';
     this.incoming = [];
     this.outgoing = [];
-    console.log('Mock server initializing.');
+    if (!quiet) console.log('Mock server initializing.');
 
     this.server = connectionClass.createServer(options, function(c) {
         var active = true;
@@ -53,7 +56,7 @@ var MockIrcd = function(port, encoding, isSecure) {
     this.server.listen(this.port);
 
     this.server.on('close', function(){
-        console.log('Mock server closed.');
+        if (!quiet) console.log('Mock server closed.');
     });
 };
 util.inherits(MockIrcd, EventEmitter);
@@ -80,8 +83,8 @@ module.exports.getFixtures = function(testSuite) {
     return fixtures[testSuite];
 };
 
-module.exports.MockIrcd = function(port, encoding, isSecure) {
-    return new MockIrcd(port, encoding, isSecure);
+module.exports.MockIrcd = function(port, encoding, isSecure, quiet) {
+    return new MockIrcd(port, encoding, isSecure, quiet);
 };
 
 module.exports.withClient = function withClient(func, givenConf) {
@@ -126,18 +129,23 @@ function setupMocks(config, callback) {
   // config.meta:
   // - autoGreet (default true): automatically greets client on connection
   // - callbackEarly (default false): calls callback on server connection instead of client registered event
+  // - disableOutput (default true): stubs util.log to reduce output clutter
   if (typeof callback === 'undefined' && typeof config === 'function') { callback = config; config = undefined; }
   config = config || {};
   config.meta = config.meta || {};
   config.client = config.client || {};
 
-  var metaConfig = Object.assign({autoGreet: true, callbackEarly: false}, config.meta);
+  var metaConfig = Object.assign({autoGreet: true, callbackEarly: false, disableOutput: true}, config.meta);
   var clientConfig = Object.assign({debug: true}, config.client);
 
+  var lib = irc;
+  if (metaConfig.disableOutput) {
+    lib = ircWithStubbedOutput;
+  }
   var lineSpy = sinon.spy();
-  var mock = module.exports.MockIrcd();
+  var mock = module.exports.MockIrcd(undefined, undefined, undefined, metaConfig.disableOutput);
   mock.on('line', lineSpy);
-  var client = new irc.Client('localhost', 'testbot', clientConfig);
+  var client = new lib.Client('localhost', 'testbot', clientConfig);
   var mockObj = {mock: mock, client: client, lineSpy: lineSpy};
 
   mock.server.on('connection', function() {
