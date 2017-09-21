@@ -36,6 +36,10 @@ describe('Client', function() {
       context('when it gets the desired nickname', function() {
         testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
 
+        beforeEach(function() {
+          this.nickSpy = this.lineSpy.withArgs(sinon.match(/^NICK/i));
+        });
+
         it('settles on first nickname', function() {
           expect(this.client.nick).to.equal('testbot');
           expect(this.client.hostMask).to.equal('testbot');
@@ -47,9 +51,8 @@ describe('Client', function() {
         });
 
         it('does not send renick', function(done) {
-          var lineSpy = this.lineSpy;
+          var nickSpy = this.nickSpy;
           setTimeout(function() {
-            var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
             expect(nickSpy.calledOnce).to.be.true;
             expect(nickSpy.calledWithExactly('NICK testbot')).to.be.true;
             done();
@@ -59,11 +62,15 @@ describe('Client', function() {
 
       context('when it does not get the desired nickname', function() {
         testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: {callbackEarly: true, autoGreet: false}});
+
+        beforeEach(function() {
+          this.nickSpy = this.lineSpy.withArgs(sinon.match(/^NICK/i));
+        });
+
         it('attains suitable fallback', function(done) {
           var client = this.client;
-          var lineSpy = this.lineSpy;
+          var nickSpy = this.nickSpy;
           defaultRenickTest(this, function onRegistered() {
-            var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
             expect(nickSpy.args).to.deep.equal([
               ['NICK testbot'],
               ['NICK testbot1'],
@@ -84,9 +91,8 @@ describe('Client', function() {
         });
 
         it('does not send renick', function(done) {
-          var lineSpy = this.lineSpy;
+          var nickSpy = this.nickSpy;
           setTimeout(function() {
-            var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
             expect(nickSpy.calledOnce).to.be.true;
             expect(nickSpy.calledWithExactly('NICK testbot')).to.be.true;
             done();
@@ -100,6 +106,10 @@ describe('Client', function() {
         var clientConfig = {autoRenick: true, renickDelay: 300};
         testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
 
+        beforeEach(function() {
+          this.nickSpy = this.lineSpy.withArgs(sinon.match(/^NICK/i));
+        });
+
         it('settles on first nickname', function() {
           expect(this.client.nick).to.equal('testbot');
           expect(this.client.hostMask).to.equal('testbot');
@@ -111,9 +121,8 @@ describe('Client', function() {
         });
 
         it('does not send renick', function(done) {
-          var lineSpy = this.lineSpy;
+          var nickSpy = this.nickSpy;
           setTimeout(function() {
-            var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
             expect(nickSpy.calledOnce).to.be.true;
             expect(nickSpy.calledWithExactly('NICK testbot')).to.be.true;
             done();
@@ -126,11 +135,14 @@ describe('Client', function() {
           var clientConfig = {autoRenick: true, renickDelay: 300};
           testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: {callbackEarly: true, autoGreet: false}});
 
+          beforeEach(function() {
+            this.nickSpy = this.lineSpy.withArgs(sinon.match(/^NICK/i));
+          });
+
           it('attains suitable fallback', function(done) {
             var client = this.client;
-            var lineSpy = this.lineSpy;
+            var nickSpy = this.nickSpy;
             defaultRenickTest(this, function onRegistered() {
-              var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
               expect(nickSpy.args).to.deep.equal([
                 ['NICK testbot'],
                 ['NICK testbot1'],
@@ -152,10 +164,9 @@ describe('Client', function() {
           });
 
           it('does not renick early', function(done) {
-            var lineSpy = this.lineSpy;
+            var nickSpy = this.nickSpy;
             defaultRenickTest(this, function onRegistered() {
               setTimeout(function() {
-                var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
                 expect(nickSpy.args).to.deep.equal([
                   ['NICK testbot'],
                   ['NICK testbot1'],
@@ -167,10 +178,9 @@ describe('Client', function() {
           });
 
           it('renicks', function(done) {
-            var lineSpy = this.lineSpy;
+            var nickSpy = this.nickSpy;
             defaultRenickTest(this, function onRegistered() {
               setTimeout(function() {
-                var nickSpy = lineSpy.withArgs(sinon.match(/^NICK/i));
                 expect(nickSpy.args).to.deep.equal([
                   ['NICK testbot'],
                   ['NICK testbot1'],
@@ -184,7 +194,7 @@ describe('Client', function() {
 
           it('stops renicking when it gets its nickname', function(done) {
             var client = this.client;
-            var lineSpy = this.lineSpy;
+            var nickSpy = this.nickSpy;
             defaultRenickTest(this, function onRegistered() {
               client.on('nick', function(oldNick, newNick) {
                 if (oldNick !== 'testbot2' || newNick !== 'testbot') return;
@@ -192,14 +202,14 @@ describe('Client', function() {
                 expect(client.hostMask).to.equal('testbot');
                 expect(client.maxLineLength).to.equal(483);
                 expect(client.conn.renickInterval).to.be.null;
-                expect(lineSpy.withArgs(sinon.match(/^NICK/i)).args).to.deep.equal([
+                expect(nickSpy.args).to.deep.equal([
                   ['NICK testbot'],
                   ['NICK testbot1'],
                   ['NICK testbot2'],
                   ['NICK testbot']
                 ]);
                 setTimeout(function() {
-                  expect(lineSpy.withArgs(sinon.match(/^NICK/i)).args).to.deep.equal([
+                  expect(nickSpy.args).to.deep.equal([
                     ['NICK testbot'],
                     ['NICK testbot1'],
                     ['NICK testbot2'],
@@ -216,7 +226,7 @@ describe('Client', function() {
           function basicRenickTest(local, expected, onFinish) {
             var rebuked = false;
             var mock = local.mock;
-            var nickSpy = local.lineSpy.withArgs(sinon.match(/^NICK/i));
+            var nickSpy = local.nickSpy;
             mock.on('line', function(line) {
               var args = line.split(' ');
               if (args[0] !== 'NICK') return;
@@ -239,6 +249,10 @@ describe('Client', function() {
           var metaConfig = {callbackEarly: true, autoGreet: false};
           var clientConfig = {autoRenick: true, renickDelay: 50, renickCount: 3};
           testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: metaConfig});
+
+          beforeEach(function() {
+            this.nickSpy = this.lineSpy.withArgs(sinon.match(/^NICK/i));
+          });
 
           it('only renicks given amount', function(done) {
             basicRenickTest(
