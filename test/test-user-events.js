@@ -1,0 +1,151 @@
+var testHelpers = require('./helpers');
+var chai = require('chai');
+var expect = chai.expect;
+var sinon = require('sinon');
+
+describe('Client', function() {
+  describe('user events', function() {
+    context('with standard client', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+      it('emits events per fixtures', function(done) {
+        var mock = this.mock;
+        var client = this.client;
+        var expected = [
+          ['join', '#test', 'testbot'],
+          ['names', '#test', {testbot: '', user1: '', user2: '@', user3: ''}],
+          ['join', '#test2', 'testbot'],
+          ['names', '#test2', {testbot: '', user1: '', user3: ''}],
+          ['part', '#test', 'user1', 'Leaving',],
+          ['join', '#test', 'user1'],
+          ['quit', 'user1', 'Quit: Leaving', ['#test', '#test2']],
+          ['nick', 'user2', 'user4', ['#test']],
+          ['nick', 'user3', 'user5', ['#test', '#test2']],
+          ['quit', 'user4', 'Quit: Leaving', ['#test']],
+          ['part', '#test', 'user5', 'Bye'],
+          ['quit', 'user5', 'See ya', ['#test2']]
+        ];
+        var actual = [];
+
+        function spyEvent(eventName) {
+          client.on(eventName, function() {
+            var args = Array.from(arguments);
+            args.unshift(eventName);
+            args = JSON.parse(JSON.stringify(args));
+            var lastArg = args[args.length-1];
+            if (typeof lastArg === 'object' && lastArg.prefix) {
+              args.pop(); // remove unnecessary `message`s
+            }
+            actual.push(args);
+            if (actual.length === expected.length) teardown();
+          });
+        }
+
+        spyEvent('join');
+        spyEvent('part');
+        spyEvent('quit');
+        spyEvent('names');
+        spyEvent('nick');
+
+        // welcome bot, give relevant prefix symbols
+        mock.send(':localhost 311 testbot testbot ~testbot EXAMPLE.HOST * :testbot\r\n');
+        mock.send(':localhost 005 testbot PREFIX=(qaohv)~&@%+ :are supported by this server\r\n');
+
+        // #test: testbot joins. users: testbot, user1, user2
+        client.join('#test');
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
+        mock.send(':localhost 353 testbot = #test :testbot user1 @user2 user3\r\n');
+        mock.send(':localhost 366 testbot #test :End of /NAMES list.\r\n');
+        // #test2: testbot joins. users: testbot, user1, user3
+        client.join('#test2');
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test2\r\n');
+        mock.send(':localhost 353 testbot = #test2 :testbot user1 user3\r\n');
+        mock.send(':localhost 366 testbot #test2 :End of /NAMES list.\r\n');
+
+        // #test: user1 parts, joins
+        mock.send(':user1!~user1@example.host PART #test :Leaving\r\n');
+        mock.send(':user1!~user1@example.host JOIN #test\r\n');
+
+        // user1 quits (#test, #test2)
+        mock.send(':user1!~user1@example.host QUIT :Quit: Leaving\r\n');
+        // user2 renames to user4 (#test)
+        mock.send(':user2!~user2@example.host NICK :user4\r\n');
+        // user3 renames to user5 (#test, #test2)
+        mock.send(':user3!~user3@example.host NICK :user5\r\n');
+        // user4 quits (#test)
+        mock.send(':user4!~user2@example.host QUIT :Quit: Leaving\r\n');
+
+        // #test: user5 parts
+        mock.send(':user5!~user3@example.host PART #test :Bye\r\n');
+        // user5 quits (#test2)
+        mock.send(':user5!~user3@example.host QUIT :See ya\r\n');
+
+        function teardown() {
+          expect(actual).to.deep.equal(expected);
+          done();
+        }
+      });
+
+      it('emits events both case-preserving and case-lowered where they differ');
+
+      it('handles self-events properly');
+    });
+
+    context('on kick', function() {
+      function setupKickExpect(local, expectedCount, done, expectKicks) {
+        var client = local.client;
+        var mock = local.mock;
+        local.clientKickSpy = sinon.spy();
+        client.join('#test');
+        client.on('kick', local.clientKickSpy);
+        client.on('kick', function() {
+          client.send('PING', 'endtest');
+        });
+        mock.on('line', function(line) {
+          if (line === 'PING endtest') teardown(local, expectedCount, done, expectKicks);
+        });
+        mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
+        mock.send(':localhost 353 testbot = #test :testbot @user1 user2\r\n');
+        mock.send(':localhost 366 testbot #test :End of /NAMES list.\r\n');
+      }
+
+      function teardown(local, expectedCount, done, expectKicks) {
+        var joinSpy = local.lineSpy.withArgs(sinon.match(/^JOIN/i));
+        expect(joinSpy.callCount).to.equal(expectedCount);
+        var clientKickSpy = local.clientKickSpy;
+        var kicks = clientKickSpy.args;
+        kicks.forEach(function(argList) {
+          var lastArg = argList[argList.length-1];
+          if (typeof lastArg === 'object' && lastArg.prefix) argList.pop();
+        });
+        expect(kicks).to.deep.equal(expectKicks);
+        done();
+      }
+
+      context('when autoRejoin disabled', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {autoRejoin: false}});
+
+        it('does not rejoin', function(done) {
+          setupKickExpect(this, 1, done, [['#test', 'testbot', 'user1', undefined]]);
+          this.mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
+        });
+      });
+
+      context('when autoRejoin enabled', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {autoRejoin: true}});
+
+        it('rejoins if it was kicked user', function(done) {
+          setupKickExpect(this, 2, done, [['#test', 'testbot', 'user1', undefined]]);
+          this.mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
+        });
+
+        it('does not rejoin if it was not kicked user', function(done) {
+          setupKickExpect(this, 1, done, [['#test', 'test2', 'user1', undefined]]);
+          this.mock.send(':user1!~user1@example.host KICK #test test2\r\n');
+        });
+      });
+    });
+
+    it('handles PRIVMSGs properly');
+    it('handles INVITEs properly');
+  });
+});
