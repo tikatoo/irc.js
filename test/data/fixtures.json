@@ -147,6 +147,14 @@
             "args": ["#channel", "test message"]
         }
     },
+    "parse-line-noprefix": {
+        "477 nodebot #channel :Cannot join channel (+r) - you need to be identified with services": {
+            "command": "477",
+            "rawCommand": "477",
+            "commandType": "error",
+            "args": ["nodebot", "#channel", "Cannot join channel (+r) - you need to be identified with services"]
+        }
+    },
     "convert-encoding": {
         "causesException": [
             ":ubottu!ubottu@ubuntu/bot/ubottu MODE #ubuntu -bo *!~Brian@* ubottu\r\n",
