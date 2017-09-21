@@ -1,30 +1,51 @@
-var irc = require('../lib/irc');
-var test = require('tape');
-
 var testHelpers = require('./helpers');
+var chai = require('chai');
+var expect = chai.expect;
+var sinon = require('sinon');
 
-test('joins, parts, renicks and quits', function(t) {
-    var mock = testHelpers.MockIrcd();
-    var client = new irc.Client('localhost', 'testbot', {debug: true});
-    var expected = [
-        ['join', '#test', 'testbot'],
-        ['names', '#test', {testbot: '', user1: '', user2: '@', user3: ''}],
-        ['join', '#test2', 'testbot'],
-        ['names', '#test2', {testbot: '', user1: '', user3: ''}],
-        ['part', '#test', 'user1', 'Leaving'],
-        ['join', '#test', 'user1'],
-        ['quit', 'user1', 'Quit: Leaving', ['#test', '#test2']],
-        ['nick', 'user2', 'user4', ['#test']],
-        ['nick', 'user3', 'user5', ['#test', '#test2']],
-        ['quit', 'user4', 'Quit: Leaving', ['#test']],
-        ['part', '#test', 'user5', 'Bye'],
-        ['quit', 'user5', 'See ya', ['#test2']]
-    ];
-    var actual = [];
+describe('Client', function() {
+  describe('user events', function() {
+    context('with standard client', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+      it('emits events per fixtures', function(done) {
+        var mock = this.mock;
+        var client = this.client;
+        var expected = [
+          ['join', '#test', 'testbot'],
+          ['names', '#test', {testbot: '', user1: '', user2: '@', user3: ''}],
+          ['join', '#test2', 'testbot'],
+          ['names', '#test2', {testbot: '', user1: '', user3: ''}],
+          ['part', '#test', 'user1', 'Leaving',],
+          ['join', '#test', 'user1'],
+          ['quit', 'user1', 'Quit: Leaving', ['#test', '#test2']],
+          ['nick', 'user2', 'user4', ['#test']],
+          ['nick', 'user3', 'user5', ['#test', '#test2']],
+          ['quit', 'user4', 'Quit: Leaving', ['#test']],
+          ['part', '#test', 'user5', 'Bye'],
+          ['quit', 'user5', 'See ya', ['#test2']]
+        ];
+        var actual = [];
 
-    mock.server.on('connection', function() { mock.greet(); });
+        function spyEvent(eventName) {
+          client.on(eventName, function() {
+            var args = Array.from(arguments);
+            args.unshift(eventName);
+            args = JSON.parse(JSON.stringify(args));
+            var lastArg = args[args.length-1];
+            if (typeof lastArg === 'object' && lastArg.prefix) {
+              args.pop(); // remove unnecessary `message`s
+            }
+            actual.push(args);
+            if (actual.length === expected.length) teardown();
+          });
+        }
 
-    client.on('registered', function() {
+        spyEvent('join');
+        spyEvent('part');
+        spyEvent('quit');
+        spyEvent('names');
+        spyEvent('nick');
+
         // welcome bot, give relevant prefix symbols
         mock.send(':localhost 311 testbot testbot ~testbot EXAMPLE.HOST * :testbot\r\n');
         mock.send(':localhost 005 testbot PREFIX=(qaohv)~&@%+ :are supported by this server\r\n');
@@ -58,108 +79,73 @@ test('joins, parts, renicks and quits', function(t) {
         // user5 quits (#test2)
         mock.send(':user5!~user3@example.host QUIT :See ya\r\n');
 
-        client.disconnect();
+        function teardown() {
+          expect(actual).to.deep.equal(expected);
+          done();
+        }
+      });
+
+      it('emits events both case-preserving and case-lowered where they differ');
+
+      it('handles self-events properly');
     });
 
-    function addEvent(arg) {
-        arg = JSON.parse(JSON.stringify(arg)); // hack to make it deep copy the arg
-        actual.push(arg);
-    }
-
-    client.on('join', function(channel, nick) {
-        addEvent(['join', channel, nick]);
-    });
-    client.on('part', function(channel, nick, reason) {
-        addEvent(['part', channel, nick, reason]);
-    });
-    client.on('quit', function(nick, reason, channels) {
-        addEvent(['quit', nick, reason, channels]);
-    });
-    client.on('names', function(channel, nicks) {
-        addEvent(['names', channel, nicks]);
-    });
-    client.on('nick', function(oldnick, newnick, channels) {
-        addEvent(['nick', oldnick, newnick, channels]);
-    });
-
-    mock.on('end', function() {
-        mock.close();
-        t.deepEqual(actual, expected);
-        t.end();
-    });
-});
-
-test.skip('client sends both case-preserving and case-lowered events for cased channels');
-
-test.skip('client handles self-events properly');
-
-var withKickSetup = function(t, client, mock, performKicks, onMockClose) {
-    // onMockClose receives a parameter of the number of joins that occurred.
-    mock.server.on('connection', function() { mock.greet(); });
-
-    var joinCount = 0;
-    // prep test to cause client to disconnect on 'endtest' ping
-    mock.on('line', function(line) {
-        if (line.indexOf("JOIN") >= 0) joinCount++;
-        if (line === 'PING endtest') client.disconnect();
-    });
-
-    client.on('registered', function() {
-        // #test: testbot joins, users: testbot, user1, user2
+    context('on kick', function() {
+      function setupKickExpect(local, expectedCount, done, expectKicks) {
+        var client = local.client;
+        var mock = local.mock;
+        local.clientKickSpy = sinon.spy();
         client.join('#test');
+        client.on('kick', local.clientKickSpy);
+        client.on('kick', function() {
+          client.send('PING', 'endtest');
+        });
+        mock.on('line', function(line) {
+          if (line === 'PING endtest') teardown(local, expectedCount, done, expectKicks);
+        });
         mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
         mock.send(':localhost 353 testbot = #test :testbot @user1 user2\r\n');
         mock.send(':localhost 366 testbot #test :End of /NAMES list.\r\n');
+      }
 
-        performKicks();
+      function teardown(local, expectedCount, done, expectKicks) {
+        var joinSpy = local.lineSpy.withArgs(sinon.match(/^JOIN/i));
+        expect(joinSpy.callCount).to.equal(expectedCount);
+        var clientKickSpy = local.clientKickSpy;
+        var kicks = clientKickSpy.args;
+        kicks.forEach(function(argList) {
+          var lastArg = argList[argList.length-1];
+          if (typeof lastArg === 'object' && lastArg.prefix) argList.pop();
+        });
+        expect(kicks).to.deep.equal(expectKicks);
+        done();
+      }
+
+      context('when autoRejoin disabled', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {autoRejoin: false}});
+
+        it('does not rejoin', function(done) {
+          setupKickExpect(this, 1, done, [['#test', 'testbot', 'user1', undefined]]);
+          this.mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
+        });
+      });
+
+      context('when autoRejoin enabled', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {autoRejoin: true}});
+
+        it('rejoins if it was kicked user', function(done) {
+          setupKickExpect(this, 2, done, [['#test', 'testbot', 'user1', undefined]]);
+          this.mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
+        });
+
+        it('does not rejoin if it was not kicked user', function(done) {
+          setupKickExpect(this, 1, done, [['#test', 'test2', 'user1', undefined]]);
+          this.mock.send(':user1!~user1@example.host KICK #test test2\r\n');
+        });
+      });
     });
 
-    client.on('kick', function() {
-        t.ok(true, 'client must receive kick');
-        client.send('PING', 'endtest');
-    });
-
-    mock.on('end', function() {
-        mock.close(function(){ onMockClose(joinCount); });
-    });
-};
-
-test('client does not rejoin after kick when config disabled', function(t) {
-    var mock = testHelpers.MockIrcd();
-    var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: false});
-
-    withKickSetup(t, client, mock, function() {
-        mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
-    }, function(joinCount) {
-        t.equal(joinCount, 1, 'server must receive just one join');
-        t.end();
-    });
+    it('handles PRIVMSGs properly');
+    it('handles INVITEs properly');
+  });
 });
-
-test('client rejoins when kicked with config enabled', function(t) {
-    var mock = testHelpers.MockIrcd();
-    var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: true});
-
-    withKickSetup(t, client, mock, function() {
-        mock.send(':user1!~user1@example.host KICK #test testbot\r\n');
-    }, function(joinCount) {
-        t.equal(joinCount, 2, 'server must receive two joins');
-        t.end();
-    });
-});
-
-test('client only rejoins when self kicked', function(t) {
-    var mock = testHelpers.MockIrcd();
-    var client = new irc.Client('localhost', 'testbot', {debug: true, autoRejoin: true});
-
-    withKickSetup(t, client, mock, function() {
-        mock.send(':user1!~user1@example.host KICK #test test2\r\n');
-    }, function(joinCount) {
-        t.equal(joinCount, 1, 'server must receive just one join');
-        t.end();
-    });
-});
-
-test.skip('client handles PRIVMSGs properly');
-
-test.skip('client handles INVITEs properly');

@@ -1,38 +1,37 @@
-var parseMessage  = require('../lib/parse_message');
-var test = require('tape');
-
+var parseMessage = require('../lib/parse_message');
 var testHelpers = require('./helpers');
+var chai = require('chai');
+var expect = chai.expect;
 
-['strict', 'non-strict'].forEach(function(type) {
-    test('irc.parseMessage ' + type + ' mode', function(t) {
-        var checks = testHelpers.getFixtures('parse-line');
-
-        Object.keys(checks).forEach(function(line) {
-            var stripColors = false;
-            var expected = Object.assign({}, checks[line]);
-            if (expected.hasOwnProperty('stripColors')) {
-                stripColors = expected.stripColors;
-                delete expected.stripColors;
-            }
-            t.equal(
-                JSON.stringify(parseMessage(line, stripColors, type === 'strict')),
-                JSON.stringify(expected),
-                line + ' must parse correctly'
-            );
-        });
-        t.end();
+describe('parseMessage', function() {
+  function sharedExamples(type) {
+    it('parses fixtures correctly', function() {
+      var checks = testHelpers.getFixtures('parse-line');
+      Object.keys(checks).forEach(function(line) {
+        var stripColors = false;
+        var expected = Object.assign({}, checks[line]);
+        if (expected.hasOwnProperty('stripColors')) {
+            stripColors = expected.stripColors;
+            delete expected.stripColors;
+        }
+        expect(JSON.stringify(parseMessage(line, stripColors, type === 'strict'))).to.equal(JSON.stringify(expected));
+      });
     });
-});
+  }
 
-test('irc.parseMessage non-strict parsing mode with Unicode', function(t) {
-    var checks = testHelpers.getFixtures('parse-line-nonstrict');
+  context('in strict mode', function() {
+    sharedExamples('strict');
+  });
 
-    Object.keys(checks).forEach(function(line) {
-        t.equal(
-            JSON.stringify(parseMessage(line, false, false)),
-            JSON.stringify(checks[line]),
-            line + ' must parse correctly'
-        );
+  context('in non-strict mode', function() {
+    sharedExamples('non-strict');
+
+    it('parses Unicode fixtures correctly', function() {
+      var checks = testHelpers.getFixtures('parse-line-nonstrict');
+
+      Object.keys(checks).forEach(function(line) {
+        expect(JSON.stringify(parseMessage(line, false, false))).to.equal(JSON.stringify(checks[line]));
+      });
     });
-    t.end();
+  });
 });

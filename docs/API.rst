@@ -24,13 +24,13 @@ Client
             debug: false,
             showErrors: false,
             channels: [],
+            autoConnect: true,
             autoRejoin: false,
             autoRenick: false,
-            autoConnect: true,
-            retryCount: 0,
-            retryDelay: 2000,
-            renickCount: 0,
+            renickCount: null,
             renickDelay: 60000,
+            retryCount: null,
+            retryDelay: 2000,
             secure: false,
             selfSigned: false,
             certExpired: false,
@@ -68,13 +68,6 @@ Client
         client.connect();
 
     ``autoRejoin`` has the client rejoin channels after being kicked.
-    See ``retryCount`` and ``retryDelay`` to configure.
-
-    ``retryCount`` is the number of times the client will try to automatically reconnect when disconnected.
-    It defaults to 0.
-
-    ``retryDelay`` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected.
-    It defaults to 2000ms (2 seconds).
 
     ``autoRenick`` has the client attempt to renick to its configured nickname if it can't originally join with it (due to nickname clash).
     Only takes effect when the client receives a ``err_nicknameinuse`` message – if disabled after this point, will not cancel the effect.
@@ -82,10 +75,16 @@ Client
     See ``renickCount`` and ``renickDelay`` to configure.
 
     ``renickCount`` is the number of times the client will try to automatically renick (reset each time it connects).
-    It defaults to 0 (meaning infinite retry).
+    It defaults to ``null`` (meaning infinite retry).
 
     ``renickDelay`` is the number of milliseconds to wait before retrying to automatically renick.
     It defaults to 60,000ms (60 seconds).
+
+    ``retryCount`` is the number of times the client will try to automatically reconnect when disconnected from the server.
+    It defaults to ``null`` (meaning infinite retry).
+
+    ``retryDelay`` is the number of milliseconds to wait before retrying to automatically reconnect when disconnected from the server.
+    It defaults to 2000ms (2 seconds).
 
     ``secure`` (SSL connection) can be a true value or an object (the kind returned by ``crypto.createCredentials()``) specifying the certificate and other details for validation.
     If you set ``selfSigned`` to true, it will accept certificates from a non-trusted CA.

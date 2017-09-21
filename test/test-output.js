@@ -1,80 +1,78 @@
-var test = require('tape');
-
+var chai = require('chai');
+var expect = chai.expect;
+var sinon = require('sinon');
 var proxyquire = require('proxyquire');
 
-function stubIRC(outputArray) {
-    var utilStub = {};
-    utilStub.log = function() {
-        outputArray.push(Array.prototype.slice.call(arguments));
-    };
-    return proxyquire('../lib/irc', {util: utilStub});
-}
+describe('Client', function() {
+  describe('out', function() {
+    before(function() {
+      var logStub = sinon.spy();
+      var utilStub = {log: logStub};
+      var irc = proxyquire('../lib/irc', {util: utilStub});
+      this.logStub = logStub;
+      this.ircWithStub = irc;
 
-test('debug does not output if debug config disabled', function(t) {
-    var output = [];
-    var ircWithUtilStub = stubIRC(output);
-    var client = new ircWithUtilStub.Client('localhost', 'nick', {debug: false, autoConnect: false});
-    client.out.debug('Test message');
-    t.deepEqual(output, [], 'must not output');
-    t.end();
-});
+      this.makeClient = function(config) {
+        this.client = new this.ircWithStub.Client('localhost', 'nick', Object.assign({autoConnect: false}, config));
+        return this.client;
+      };
+    });
 
-test('debug outputs messages if debug config enabled', function(t) {
-    var output = [];
-    var ircWithUtilStub = stubIRC(output);
-    var client = new ircWithUtilStub.Client('localhost', 'nick', {debug: true, autoConnect: false});
-    client.out.debug('Test message');
-    t.deepEqual(output, [['Test message']], 'must output correct once');
-    client.out.debug('New message');
-    t.deepEqual(output, [['Test message'], ['New message']], 'must output correct twice');
-    t.end();
-});
+    beforeEach(function() {
+      this.logStub.reset();
+    });
 
-test('error does not output if both configs disabled', function(t) {
-    var output = [];
-    var ircWithUtilStub = stubIRC(output);
-    var client = new ircWithUtilStub.Client('localhost', 'nick', {debug: false, showErrors: false, autoConnect: false});
-    client.out.error('Test message');
-    t.deepEqual(output, [], 'must not output');
-    t.end();
-});
+    describe('debug', function() {
+      it('does not output with debug config disabled', function() {
+        this.makeClient({debug: false});
+        this.client.out.debug('Test message');
+        expect(this.logStub.args).to.deep.equal([]);
+      });
 
-function mustError(client, output, t) {
-    client.out.error('Test message');
-    t.deepEqual(output,
-        [
+      it('outputs with debug config enabled', function() {
+        this.makeClient({debug: true});
+        this.client.out.debug('Test message');
+        expect(this.logStub.args).to.deep.equal([['Test message']]);
+        this.client.out.debug('New message');
+        expect(this.logStub.args).to.deep.equal([['Test message'], ['New message']]);
+      });
+    });
+
+    describe('error', function() {
+      before(function(){
+        this.testErrorOutput = function() {
+          this.client.out.error('Test message');
+          expect(this.logStub.args).to.deep.equal([
             ['\u001b[01;31mERROR:', 'Test message', '\u001b[0m']
-        ],
-        'must output correct once');
-    client.out.error('New message');
-    t.deepEqual(output,
-        [
+          ]);
+          this.client.out.error('New message');
+          expect(this.logStub.args).to.deep.equal([
             ['\u001b[01;31mERROR:', 'Test message', '\u001b[0m'],
             ['\u001b[01;31mERROR:', 'New message', '\u001b[0m']
-        ],
-        'must output correct twice');
-}
+          ]);
+        };
+      });
 
-test('error outputs messages if debug config enabled', function(t) {
-    var output = [];
-    var ircWithUtilStub = stubIRC(output);
-    var client = new ircWithUtilStub.Client('localhost', 'nick', {debug: true, showErrors: false, autoConnect: false});
-    mustError(client, output, t);
-    t.end();
-});
+      it('does not output with both configs disabled', function() {
+        this.makeClient({debug: false, showErrors: false});
+        this.client.out.error('Test message');
+        expect(this.logStub.args).to.deep.equal([]);
+      });
 
-test('error outputs messages if showErrors config enabled', function(t) {
-    var output = [];
-    var ircWithUtilStub = stubIRC(output);
-    var client = new ircWithUtilStub.Client('localhost', 'nick', {debug: false, showErrors: true, autoConnect: false});
-    mustError(client, output, t);
-    t.end();
-});
+      it('outputs if debug config enabled', function() {
+        this.makeClient({debug: true, showErrors: false});
+        this.testErrorOutput();
+      });
 
-test('error outputs messages if both configs enabled', function(t) {
-    var output = [];
-    var ircWithUtilStub = stubIRC(output);
-    var client = new ircWithUtilStub.Client('localhost', 'nick', {debug: true, showErrors: true, autoConnect: false});
-    mustError(client, output, t);
-    t.end();
+      it('outputs if errors config enabled', function() {
+        this.makeClient({debug: false, showErrors: true});
+        this.testErrorOutput();
+      });
+
+      it('outputs if both configs enabled', function() {
+        this.makeClient({debug: true, showErrors: true});
+        this.testErrorOutput();
+      });
+    });
+  });
 });

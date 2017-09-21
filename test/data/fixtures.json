@@ -1,12 +1,12 @@
 {
     "basic": {
         "sent": [
-            ["NICK testbot", "Client sent NICK message"],
-            ["USER nodebot 8 * :nodeJS IRC client", "Client sent USER message"],
-            ["QUIT :node-irc says goodbye", "Client sent QUIT message"]
+            "NICK testbot",
+            "USER nodebot 8 * :nodeJS IRC client",
+            "QUIT :node-irc says goodbye"
         ],
         "received": [
-            [":localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n", "Received welcome message"]
+            ":localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n"
         ]
     },
     "double-CRLF": {
@@ -183,16 +183,6 @@
             "result": ["abcdefghijklmnopqrstuvwxyz"]
         }
     ],
-    "_speak": [
-        {
-            "length": 30,
-            "expected": 10
-        },
-        {
-            "length": 7,
-            "expected": 1
-        }
-    ],
     "_splitLongLines_bytes": [
         {
             "input": "<Throne> 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQR",
@@ -203,15 +193,47 @@
             "result": ["<Throne>", "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペ", "ホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジス", "ズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲン", "ヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒ", "ビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケ", "ゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリル", "レロヮワヰヱヲンヴヵヶヷヸヹヺ・ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ"]
         }
     ],
-    "quit": {
-        "sent": [
-            ["NICK testbot", "Client sent NICK message"],
-            ["USER nodebot 8 * :nodeJS IRC client", "Client sent USER message"],
-            ["QUIT :quitting as a test", "Client sent QUIT message"]
+    "mode": {
+        "expected": [
+            {"key": "#channel","serverName": "#channel","users": {},"modeParams": {"n": []},"mode": "n"},
+            {"key": "#channel","serverName": "#channel","users": {},"modeParams": {"n": [],"t": []},"mode": "nt"},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"modeParams": {"n": [],"t": []},"mode": "+nt"},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntb","modeParams": {"b": ["*!*@AN.IP.1"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntb","modeParams": {"b": ["*!*@AN.IP.1","*!*@AN.IP.2"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntb","modeParams": {"b": ["*!*@AN.IP.1","*!*@AN.IP.2","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntb","modeParams": {"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbf","modeParams": {"f": ["[10j]:15"],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbf","modeParams": {"f": ["[8j]:15"],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntb","modeParams": {"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbj","modeParams": {"j": ["3:5"],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbj","modeParams": {"j": ["2:5"],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntb","modeParams": {"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbp","modeParams": {"p": [],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbps","modeParams": {"s": [],"p": [],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbpsK","modeParams": {"K": [],"s": [],"p": [],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbsK","modeParams": {"K": [],"s": [],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbK","modeParams": {"K": [],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}},
+            {"key": "#channel","serverName": "#channel","users": {"testbot": "@"},"mode": "+ntbKF","modeParams": {"F": [],"K": [],"b": ["*!*@AN.IP.1","*!*@AN.IP.3"],"n": [],"t": []}}
         ],
-
-        "received": [
-            [":localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n", "Received welcome message"]
+        "serverMessages": [
+          ":localhost 005 testbot MODES=12 CHANTYPES=# PREFIX=(ohv)@%+ CHANMODES=beIqa,kfL,lj,psmntirRcOAQKVCuzNSMTGHFEB\r\n",
+          ":testbot MODE testbot :+ix\r\n",
+          ":testbot JOIN :#channel\r\n",
+          ":localhost MODE #channel +nt\r\n",
+          ":localhost 353 testbot = #channel :@testbot\r\n",
+          ":localhost 366 testbot #channel :End of /NAMES list.\r\n",
+          ":localhost 324 testbot #channel +nt\r\n",
+          ":localhost MODE #channel -b *!*@AN.IP.1\r\n",
+          ":localhost MODE #channel +b *!*@AN.IP.1\r\n",
+          ":localhost MODE #channel +bb *!*@AN.IP.2 *!*@AN.IP.3\r\n",
+          ":localhost MODE #channel -b *!*@AN.IP.2\r\n",
+          ":localhost MODE #channel +f [10j]:15\r\n",
+          ":localhost MODE #channel +f [8j]:15\r\n",
+          ":localhost MODE #channel -f+j [10j]:15 3:5\r\n",
+          ":localhost MODE #channel +j 2:5\r\n",
+          ":localhost MODE #channel -j\r\n",
+          ":localhost MODE #channel +ps\r\n",
+          ":localhost MODE #channel +K-p-s+F\r\n"
         ]
     }
 }
