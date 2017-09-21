@@ -1,12 +1,12 @@
 {
     "basic": {
         "sent": [
-            ["NICK testbot", "Client sent NICK message"],
-            ["USER nodebot 8 * :nodeJS IRC client", "Client sent USER message"],
-            ["QUIT :node-irc says goodbye", "Client sent QUIT message"]
+            "NICK testbot",
+            "USER nodebot 8 * :nodeJS IRC client",
+            "QUIT :node-irc says goodbye"
         ],
         "received": [
-            [":localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n", "Received welcome message"]
+            ":localhost 001 testbot :Welcome to the Internet Relay Chat Network testbot\r\n"
         ]
     },
     "double-CRLF": {
@@ -181,16 +181,6 @@
         {
             "input": "abcdefghijklmnopqrstuvwxyz",
             "result": ["abcdefghijklmnopqrstuvwxyz"]
-        }
-    ],
-    "_speak": [
-        {
-            "length": 30,
-            "expected": 10
-        },
-        {
-            "length": 7,
-            "expected": 1
         }
     ],
     "_splitLongLines_bytes": [
