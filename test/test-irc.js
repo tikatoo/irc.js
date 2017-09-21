@@ -86,6 +86,67 @@ describe('Client', function() {
       });
     });
 
+    context('with standard client', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {retryDelay: 50}, meta: {disableOutput: false}});
+
+      it('disallows double connections', function() {
+        var client = this.client;
+        var oldConn = client.conn;
+        client.out.error = sinon.spy();
+
+        client.connect();
+        expect(client.conn).to.equal(oldConn);
+        expect(client.out.error.args).to.deep.equal([
+          ['Connection already active, not reconnecting – please disconnect first']
+        ]);
+      });
+
+      it('disallows double disconnections', function() {
+        var client = this.client;
+        client.disconnect();
+        expect(client.conn.requestedDisconnect).to.be.true;
+        client.out.error = sinon.spy();
+
+        client.disconnect();
+        expect(client.conn.requestedDisconnect).to.be.true;
+        expect(client.out.error.args).to.deep.equal([
+          ['Connection already disconnecting, skipping disconnect']
+        ]);
+      });
+
+      itWithCustomMock('skips disconnection if not connected',
+      {meta: {withoutServer: true}},
+      function() {
+        var client = this.client;
+        expect(client.conn).to.be.null;
+        client.out.error = sinon.spy();
+
+        client.disconnect();
+        expect(client.conn).to.be.null;
+        expect(client.retryTimeout).not.to.be.ok;
+        expect(client.out.error.args).to.deep.equal([
+          ['Connection already broken, skipping disconnect']
+        ]);
+      });
+
+      it('clears up auto-reconnect if told to disconnect while waiting', function(done) {
+        var client = this.client;
+        client.conn.on('close', abortReconnect);
+        client.out.error = sinon.spy();
+        client.end();
+        function abortReconnect() {
+          expect(client.retryTimeout).to.be.ok;
+          client.disconnect();
+          expect(client.conn).to.be.null;
+          expect(client.retryTimeout).to.be.null;
+          expect(client.out.error.args).to.deep.equal([
+            ['Connection already broken, skipping disconnect (and clearing up automatic retry)']
+          ]);
+          done();
+        }
+      });
+    });
+
     it('client joins opt.channels on receiving motd');
   });
 
@@ -178,8 +239,6 @@ describe('Client', function() {
   it('handles channel-list-related events');
 
   it('handles errors in the raw handler');
-
-  it('handles double-disconnection');
 
   describe('command queue', function() {
     it('works as intended');

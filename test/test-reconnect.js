@@ -4,7 +4,7 @@ var expect = chai.expect;
 var sinon = require('sinon');
 
 describe('Client', function() {
-  describe('connection', function() {
+  describe('reconnection', function() {
     context('on connection interruption', function() {
       var clientConfig = {retryDelay: 50, autoConnect: false};
       var metaConfig = {callbackEarly: true, autoGreet: false};
@@ -52,24 +52,6 @@ describe('Client', function() {
           conns[conns.length-1].destroy();
         });
       });
-    });
-
-    context('with standard client', function() {
-      testHelpers.hookMockSetup(beforeEach, afterEach);
-
-      it('disallows double connections', function() {
-        var client = this.client;
-        var oldConn = client.conn;
-        client.out.error = sinon.spy();
-
-        client.connect();
-        expect(client.conn).to.equal(oldConn);
-        expect(client.out.error.args).to.deep.equal([
-          ['Connection already active, not reconnecting – please disconnect first']
-        ]);
-      });
-
-      it('clears up auto-reconnect if told to disconnect');
     });
   });
 });
