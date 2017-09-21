@@ -87,7 +87,7 @@ describe('Client', function() {
     });
 
     context('with standard client', function() {
-      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {retryDelay: 50}, meta: {disableOutput: false}});
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {retryDelay: 50}});
 
       it('disallows double connections', function() {
         var client = this.client;
