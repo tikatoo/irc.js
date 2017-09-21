@@ -142,11 +142,11 @@ function setupMocks(config, callback) {
 
   mock.server.on('connection', function() {
     if (metaConfig.autoGreet) mock.greet();
-    if (metaConfig.callbackEarly) callback(mockObj);
   });
-  client.on('registered', function() {
+  client.once('registered', function() {
     if (!metaConfig.callbackEarly) callback(mockObj);
   });
+  if (metaConfig.callbackEarly) callback(mockObj);
   return mockObj;
 }
 module.exports.setupMocks = setupMocks;
