@@ -63,7 +63,11 @@ var MockIrcd = function(port, encoding, isSecure, quiet) {
 util.inherits(MockIrcd, EventEmitter);
 
 MockIrcd.prototype.send = function(data) {
-    this.emit('send', data);
+  if (data.slice(-2) !== '\r\n') {
+    console.log("WARNING: mock.send called without trailing \\r\\n");
+    console.log("data:", data);
+  }
+  this.emit('send', data);
 };
 
 MockIrcd.prototype.close = function() {
