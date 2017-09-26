@@ -207,16 +207,18 @@ describe('Client', function() {
 
       it('handles self-events properly');
 
-      context('topic', function() {
+      context('with topics', function() {
         it('gets topic on joining a channel', function(done) {
           var self = this;
           var localTopicSpy = sinon.spy();
           self.client.on('topic', localTopicSpy);
+          self.client.on('raw', rawHandler);
           self.client.join('#test');
           self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
           self.mock.send(':127.0.0.1 332 testbot #test :test topic\r\n');
           self.mock.send(':127.0.0.1 333 testbot #test user1 1000000000\r\n');
-          self.client.on('raw', function(message) {
+
+          function rawHandler(message) {
             var chanData;
             if (message.command === 'rpl_topic') {
               expect(message).to.deep.equal({
@@ -250,7 +252,42 @@ describe('Client', function() {
               expect(chanData.topicBy).to.equal('user1');
               done();
             }
-          });
+          }
+        });
+
+        it('handles topic change', function(done) {
+          var self = this;
+          var localTopicSpy = sinon.spy();
+          self.client.on('topic', localTopicSpy);
+          self.client.on('raw', rawHandler);
+          self.client.join('#test');
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
+          self.mock.send(':user1!~user1@EXAMPLE2.HOST TOPIC #test :new topic\r\n');
+
+          function rawHandler(message) {
+            if (message.command !== 'TOPIC') return;
+            expect(message).to.deep.equal({
+              prefix: 'user1!~user1@EXAMPLE2.HOST',
+              nick: 'user1',
+              user: '~user1',
+              host: 'EXAMPLE2.HOST',
+              commandType: 'normal',
+              command: 'TOPIC',
+              rawCommand: 'TOPIC',
+              args: ['#test', 'new topic']
+            });
+            var chanData = self.client.chanData('#test');
+            expect(chanData.topic).to.equal('new topic');
+            expect(chanData.topicBy).to.equal('user1');
+            expect(localTopicSpy.args).to.deep.equal([[
+              '#test',
+              'new topic',
+              'user1',
+              message
+            ]]);
+
+            done();
+          }
         });
       });
     });
