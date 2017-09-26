@@ -262,6 +262,40 @@ describe('Client', function() {
         });
       });
     });
+
+    describe('whois', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      it('requests and processes own whois data', function(done) {
+        var self = this;
+        self.mock.on('line', function(line) {
+          if (line !== 'WHOIS testbot') return;
+          self.mock.send(':127.0.0.1 311 testbot testbot ~testbot EXAMPLE.HOST * :test name\r\n'); // whoisuser (user, host, ?, realname)
+          self.mock.send(':127.0.0.1 312 testbot testbot 127.0.0.1 :Test server\r\n'); // whoisserver (server, serverinfo)
+          self.mock.send(':127.0.0.1 317 testbot testbot 0 1000000000 :seconds idle, signon time\r\n'); // whoisidle (idle)
+          self.mock.send(':127.0.0.1 318 testbot testbot :End of /WHOIS list.\r\n');
+        });
+        self.client.on('whois', function(data) {
+          expect(data).to.deep.equal({
+            user: '~testbot',
+            host: 'EXAMPLE.HOST',
+            realname: 'test name',
+            server: '127.0.0.1',
+            serverinfo: 'Test server',
+            idle: '0',
+            nick: 'testbot'
+          });
+
+          setImmediate(function() {
+            expect(self.client.nick).to.equal('testbot');
+            expect(self.client.hostMask).to.equal('~testbot@EXAMPLE.HOST');
+            expect(self.client.maxLineLength).to.equal(497 - 7 - 21);
+
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('_splitLongLines', function() {
