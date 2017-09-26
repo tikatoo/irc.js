@@ -519,6 +519,9 @@ Events
     Emitted whenever the server responds with a message the bot doesn't recognize and doesn't handle.
     See the ``raw`` event for details on the ``message`` object.
 
+    This must not be relied on to emit particular event codes, as the codes the bot does and does not handle can change between minor versions.
+    It should instead be used as a handler to do something when the bot does not recognize a message, such as warning a user.
+
 Colors
 ------
 
