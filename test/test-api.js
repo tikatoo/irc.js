@@ -74,6 +74,16 @@ describe('Client', function() {
       ]);
     });
 
+    it('works with comma-separated channel example', function() {
+      this.client.send('PART', '#channel1,#channel2,#channel3', 'test message');
+      expect(this.debugSpy.args).to.deep.equal([
+        ['SEND:', 'PART #channel1,#channel2,#channel3 :test message']
+      ]);
+      expect(this.connSpy.args).to.deep.equal([
+        ['PART #channel1,#channel2,#channel3 :test message\r\n']
+      ]);
+    });
+
     itWithCustomMock('does not throw when disconnected',
     {meta: {withoutServer: true}},
     function() {
