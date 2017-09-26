@@ -220,7 +220,29 @@ describe('Client', function() {
     });
   });
 
-  it('emits error events properly');
+  describe('errors', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {client: {server: '127.0.0.1'}});
+    specify('are emitted appropriately', function(done) {
+      var mock = this.mock;
+      var client = this.client;
+
+      client.on('error', function(msg) {
+        var expected = {
+          prefix: '127.0.0.1',
+          server: '127.0.0.1',
+          rawCommand: '421',
+          command: 'err_unknowncommand',
+          commandType: 'error',
+          args: ['testbot', 'test', 'Unknown command']
+        };
+        expect(msg).to.deep.equal(expected);
+        done();
+      });
+
+      client.send('test');
+      mock.send(':127.0.0.1 421 testbot test :Unknown command\r\n');
+    });
+  });
 
   itWithCustomMock('does not crash when disconnected and sending messages',
   {meta: {withoutServer: true}},
