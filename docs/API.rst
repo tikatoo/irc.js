@@ -346,6 +346,8 @@ Events
     ``function (nick, reason, channels, message) { }``
 
     Emitted when a user disconnects from the IRC server, leaving the specified array of channels.
+    Channels are emitted case-lowered.
+
     See the ``raw`` event for details on the ``message`` object.
 
 .. js:data:: 'kick'
@@ -368,6 +370,8 @@ Events
 
     Emitted when a user is killed from the IRC server.
     The ``channels`` parameter is an array of channels the killed user was in, those known to the client (that is, the ones the bot was present in).
+    Channels are emitted case-lowered.
+
     See the ``raw`` event for details on the ``message`` object.
 
 .. js:data:: 'nick'
@@ -375,6 +379,8 @@ Events
     ``function (oldnick, newnick, channels, message) { }``
 
     Emitted when a user changes nick, with the channels the user is known to be in.
+    Channels are emitted case-lowered.
+
     See the ``raw`` event for details on the ``message`` object.
 
 .. js:data:: '+mode'
