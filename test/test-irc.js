@@ -153,7 +153,115 @@ describe('Client', function() {
       });
     });
 
-    it('client joins opt.channels on receiving motd');
+    function sendMotd(mock, nick, messages) {
+      messages = messages || ['Message'];
+      mock.send(':127.0.0.1 375 ' + nick + ' :- 127.0.0.1 Message of the Day -\r\n');
+      messages.forEach(function(line) {
+        mock.send(':127.0.0.1 372 ' + nick + ' :- ' + line + '\r\n');
+      });
+      mock.send(':127.0.0.1 376 ' + nick + ' :End of /MOTD command.\r\n');
+    }
+
+    function verifyMotd(client, motd, motdLines) {
+      var expected = '- 127.0.0.1 Message of the Day -\n';
+      expected += motdLines.map(function(x) { return '- ' + x; }).join('\n') + '\n';
+      expected += 'End of /MOTD command.\n';
+      expect(motd).to.equal(expected);
+      expect(client.motd).to.equal(expected);
+    }
+
+    context('with motd', function() {
+      function sharedTests() {
+        it('emits motd', function(done) {
+          var self = this;
+          var motdLines = [
+            'Line 1',
+            'This is some more text as a test',
+            'last line'
+          ];
+          self.client.on('motd', function(motd) {
+            verifyMotd(self.client, motd, motdLines);
+            done();
+          });
+          sendMotd(self.mock, 'testbot', motdLines);
+        });
+
+        it('overwrites old motd on new connection', function(done) {
+          var self = this;
+          var first = ['Sample'];
+          var second = ['Sample text'];
+
+          self.client.once('motd', verifyFirst);
+          sendMotd(self.mock, 'testbot', first);
+
+          function verifyFirst(motd) {
+            verifyMotd(self.client, motd, first);
+            self.client.disconnect(setupSecond);
+          }
+
+          function setupSecond() {
+            self.client.connect();
+            self.client.on('registered', function() {
+              self.client.once('motd', verifySecond);
+              sendMotd(self.mock, 'testbot', second);
+            });
+          }
+
+          function verifySecond(motd) {
+            verifyMotd(self.client, motd, second);
+            done();
+          }
+        });
+      }
+
+      context('with opt.channels', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {channels: ['#test', '#test2']}});
+
+        sharedTests();
+
+        beforeEach(function() {
+          this.joinSpy = this.lineSpy.withArgs(sinon.match(/^JOIN/i));
+        });
+
+        it('joins specified channels on motd', function(done) {
+          var expected = [['JOIN #test'], ['JOIN #test2']];
+          var self = this;
+          sendMotd(self.mock, 'testbot');
+          self.client.on('motd', function() {
+            self.client.send('PING', 'endtest');
+          });
+          self.mock.on('line', function(line) {
+            if (line !== 'PING endtest') return;
+            expect(self.joinSpy.args).to.deep.equal(expected);
+            done();
+          });
+        });
+      });
+
+      context('without opt.channels', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach);
+
+        sharedTests();
+
+        beforeEach(function() {
+          this.joinSpy = this.lineSpy.withArgs(sinon.match(/^JOIN/i));
+        });
+
+        it('does not join any channels on motd', function(done) {
+          var expected = [];
+          var self = this;
+          sendMotd(self.mock, 'testbot');
+          self.client.on('motd', function() {
+            self.client.send('PING', 'endtest');
+          });
+          self.mock.on('line', function(line) {
+            if (line !== 'PING endtest') return;
+            expect(self.joinSpy.args).to.deep.equal(expected);
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('_splitLongLines', function() {
