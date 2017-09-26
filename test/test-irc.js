@@ -367,7 +367,7 @@ describe('Client', function() {
       client.end();
       client.say('#channel', 'message3');
     }
-    expect(wrap).not.to.throw;
+    expect(wrap).not.to.throw();
   });
 
   it('handles topic-related events');

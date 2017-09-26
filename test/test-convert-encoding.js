@@ -20,7 +20,7 @@ describe('Client', function() {
           var wrap = function() {
             client.convertEncoding(line);
           };
-          expect(wrap).not.to.throw;
+          expect(wrap).not.to.throw();
         });
       });
     });
@@ -39,7 +39,7 @@ describe('Client', function() {
           var wrap = function() {
             client.convertEncoding(line);
           };
-          expect(wrap).not.to.throw;
+          expect(wrap).not.to.throw();
         });
       });
 
