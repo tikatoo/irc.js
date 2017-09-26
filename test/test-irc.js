@@ -153,24 +153,24 @@ describe('Client', function() {
       });
     });
 
-    function sendMotd(mock, nick, messages) {
-      messages = messages || ['Message'];
-      mock.send(':127.0.0.1 375 ' + nick + ' :- 127.0.0.1 Message of the Day -\r\n');
-      messages.forEach(function(line) {
-        mock.send(':127.0.0.1 372 ' + nick + ' :- ' + line + '\r\n');
-      });
-      mock.send(':127.0.0.1 376 ' + nick + ' :End of /MOTD command.\r\n');
-    }
-
-    function verifyMotd(client, motd, motdLines) {
-      var expected = '- 127.0.0.1 Message of the Day -\n';
-      expected += motdLines.map(function(x) { return '- ' + x; }).join('\n') + '\n';
-      expected += 'End of /MOTD command.\n';
-      expect(motd).to.equal(expected);
-      expect(client.motd).to.equal(expected);
-    }
-
     context('with motd', function() {
+      function sendMotd(mock, nick, messages) {
+        messages = messages || ['Message'];
+        mock.send(':127.0.0.1 375 ' + nick + ' :- 127.0.0.1 Message of the Day -\r\n');
+        messages.forEach(function(line) {
+          mock.send(':127.0.0.1 372 ' + nick + ' :- ' + line + '\r\n');
+        });
+        mock.send(':127.0.0.1 376 ' + nick + ' :End of /MOTD command.\r\n');
+      }
+
+      function verifyMotd(client, motd, motdLines) {
+        var expected = '- 127.0.0.1 Message of the Day -\n';
+        expected += motdLines.map(function(x) { return '- ' + x; }).join('\n') + '\n';
+        expected += 'End of /MOTD command.\n';
+        expect(motd).to.equal(expected);
+        expect(client.motd).to.equal(expected);
+      }
+
       function sharedTests() {
         it('emits motd', function(done) {
           var self = this;
