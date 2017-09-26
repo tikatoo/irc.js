@@ -143,7 +143,7 @@ Client
     Joins the specified channel.
 
     :param string channelList: the channel(s) to join
-    :param function callback: a callback to automatically attach to `join#channelname` for each channel
+    :param function callback: an optional callback to automatically attach to ``join#channelname`` for each channel
 
     ``channelList`` supports multiple channels in a comma-separated string (`as in the IRC protocol <https://tools.ietf.org/html/rfc2812#page-16>`_).
     The callback is called for each channel, but does not include the ``channel`` parameter (see the ``join#channel`` event).
@@ -156,9 +156,11 @@ Client
 
     Parts the specified channel.
 
-    :param string channel: the channel to part
+    :param string channelList: the channel(s) to part
     :param string message: an optional message to send upon leaving the channel
-    :param function callback: a callback to run once the bot has parted the channel
+    :param function callback: a optional callback to automatically attach to ``part#channelname`` for each channel
+
+    As with ``Client.join``, the ``channelList`` parameter supports multiple channels in a comma-separated string, for each of which the callback will be called.
 
 .. js:function:: Client.say(target, message)
 

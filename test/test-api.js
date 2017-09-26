@@ -283,4 +283,140 @@ describe('Client', function() {
       });
     });
   });
+
+  describe('#part', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach);
+
+    function downcaseChannels(chans) {
+      return chans.map(function(x) { return x.toLowerCase(); });
+    }
+
+    beforeEach(function(done) {
+      var self = this;
+      setTimeout(function() {
+        self.debugSpy = sinon.spy();
+        self.sendSpy = sinon.spy();
+        self.client.out.debug = self.debugSpy;
+        self.client.send = self.sendSpy;
+        done();
+      }, 10);
+    });
+
+    function sharedExamplesFor(channels, remoteChannels) {
+      joinChannelsBefore(beforeEach, channels, remoteChannels);
+
+      it('works with no message or callback', function() {
+        var self = this;
+        function wrap() {
+          self.client.part(channels.join(','));
+        }
+        expect(wrap).not.to.throw();
+        expect(this.sendSpy.args).to.deep.equal([
+          ['PART', channels.join(',')]
+        ]);
+      });
+
+      it('sends with message and no callback', function() {
+        var self = this;
+        function wrap() {
+          self.client.part(channels.join(','), 'test message');
+        }
+        expect(wrap).not.to.throw();
+        expect(this.sendSpy.args).to.deep.equal([
+          ['PART', channels.join(','), 'test message']
+        ]);
+      });
+
+      it('sends with callback and no message', function() {
+        var self = this;
+        function wrap() {
+          self.client.part(channels.join(','), function() {});
+        }
+        expect(wrap).not.to.throw();
+        expect(this.sendSpy.args).to.deep.equal([
+          ['PART', channels.join(',')]
+        ]);
+      });
+
+      it('sends with message and callback', function() {
+        var self = this;
+        function wrap() {
+          self.client.part(channels.join(','), 'test message', function() {});
+        }
+        expect(wrap).not.to.throw();
+        expect(this.sendSpy.args).to.deep.equal([
+          ['PART', channels.join(','), 'test message']
+        ]);
+      });
+
+      it('removes from opt.channels', function(done) {
+        var self = this;
+        var i = 0;
+        self.client.on('part', function() {
+          i++;
+          if (i === channels.length) setTimeout(check, 10);
+        });
+        expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(downcaseChannels(remoteChannels));
+        self.client.part(channels.join(','), 'test message');
+        remoteChannels.forEach(function(remoteChan) {
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST PART ' + remoteChan + ' :test message\r\n');
+        });
+
+        function check() {
+          expect(self.client.opt.channels).to.empty;
+          done();
+        }
+      });
+
+      it('calls given callback', function(done) {
+        var self = this;
+        expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(downcaseChannels(remoteChannels));
+        self.client.part(channels.join(','), check);
+        remoteChannels.forEach(function(remoteChan) {
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST PART ' + remoteChan + ' :test message\r\n');
+        });
+
+        var i = 0;
+        function check(nick, reason, message) {
+          expect(nick).to.equal('testbot');
+          expect(reason).to.equal('test message');
+          expect(message).to.deep.equal({
+            prefix: 'testbot!~testbot@EXAMPLE.HOST',
+            nick: 'testbot',
+            user: '~testbot',
+            host: 'EXAMPLE.HOST',
+            commandType: 'normal',
+            command: 'PART',
+            rawCommand: 'PART',
+            args: [remoteChannels[i], 'test message']
+          });
+          i++;
+          if (i === channels.length) done();
+        }
+      });
+    }
+
+    context('with same lowercase local and remote channel', function() {
+      sharedExamplesFor(['#channel'], ['#channel']);
+    });
+
+    context('with same mixed-case local and remote channel', function() {
+      sharedExamplesFor(['#Channel'], ['#Channel']);
+    });
+
+    context('with mixed-case local channel differing from lowercase remote channel', function() {
+      sharedExamplesFor(['#Channel'], ['#channel']);
+    });
+
+    context('with lowercase local channel differing from mixed-case remote channel', function() {
+      sharedExamplesFor(['#channel'], ['#Channel']);
+    });
+
+    context('with multiple channels', function() {
+      var localChannels = ['#channel', '#channel2', '#Test', '#Test2'];
+      var remoteChannels = ['#channel', '#Channel2', '#test', '#Test2'];
+
+      sharedExamplesFor(localChannels, remoteChannels);
+    });
+  });
 });
