@@ -138,17 +138,21 @@ Client
     Sends a raw message to the server.
     Generally speaking, it's best to use other, more specific methods with priority, unless you know what you're doing.
 
-.. js:function:: Client.join(channelList, callback)
+.. js:function:: Client.join(channelList, [callback])
 
     Joins the specified channel.
 
     :param string channelList: the channel(s) to join
     :param function callback: a callback to automatically attach to `join#channelname` for each channel
 
-    ``channel`` supports multiple channels in a comma-separated string (`as in the IRC protocol <https://tools.ietf.org/html/rfc2812#page-16>`_).
+    ``channelList`` supports multiple channels in a comma-separated string (`as in the IRC protocol <https://tools.ietf.org/html/rfc2812#page-16>`_).
     The callback is called for each channel, but does not include the ``channel`` parameter (see the ``join#channel`` event).
 
-.. js:function:: Client.part(channel, [message], callback)
+    Passing ``'0'`` to the ``channelList`` parameter will send ``JOIN 0`` to the server.
+    As in the IRC spec, this will cause the client to part from all current channels.
+    In such a case, the callback will not be called; you should instead bind to the ``part`` event to keep track of the progress made.
+
+.. js:function:: Client.part(channel, [message], [callback])
 
     Parts the specified channel.
 

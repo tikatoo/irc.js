@@ -105,8 +105,35 @@ describe('Client', function() {
     });
   });
 
+  function joinChannelsBefore(beforeEach, localChannels, remoteChannels) {
+    beforeEach(function(done) {
+      var self = this;
+      var i = 0;
+      self.client.on('join', function() {
+        i++;
+        if (i === localChannels.length) {
+          setTimeout(function() {
+            self.debugSpy.reset();
+            self.sendSpy.reset();
+            done();
+          }, 10);
+        }
+      });
+      localChannels.forEach(function(chan) {
+        self.client.join(chan);
+      });
+      remoteChannels.forEach(function(remoteChan) {
+        self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+      });
+    });
+  }
+
   describe('#join', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);
+
+    function downcaseChannels(chans) {
+      return chans.map(function(x) { return x.toLowerCase(); });
+    }
 
     beforeEach(function(done) {
       var self = this;
@@ -120,12 +147,12 @@ describe('Client', function() {
     });
 
     function sharedExamplesFor(channels, remoteChannels) {
-      function downcaseChannels(chans) {
-        return chans.map(function(x) { return x.toLowerCase(); });
-      }
-
-      it('sends correct command', function() {
-        this.client.join(channels.join(','));
+      it('sends correct command and does not throw with no callback', function() {
+        var self = this;
+        function wrap() {
+          self.client.join(channels.join(','));
+        }
+        expect(wrap).not.to.throw();
         expect(this.sendSpy.args).to.deep.equal([
           ['JOIN', channels.join(',')]
         ]);
@@ -198,6 +225,62 @@ describe('Client', function() {
       var remoteChannels = ['#channel', '#Channel2', '#test', '#Test2'];
 
       sharedExamplesFor(localChannels, remoteChannels);
+    });
+
+    context('with zero parameter', function() {
+      var localChannels = ['#channel', '#channel2', '#Test', '#Test2'];
+      var remoteChannels = ['#channel', '#Channel2', '#test', '#Test2'];
+
+      joinChannelsBefore(beforeEach, localChannels, remoteChannels);
+
+      it('sends correct command and does not throw without callback', function() {
+        var self = this;
+        function wrap() {
+          self.client.join('0');
+        }
+        expect(wrap).not.to.throw();
+        expect(this.sendSpy.args).to.deep.equal([
+          ['JOIN', '0']
+        ]);
+      });
+
+      it('removes all channels from opt.channels and does not call callback', function() {
+        var self = this;
+        var localPartSpy = sinon.spy();
+        var callbackSpy = sinon.spy();
+        self.client.on('part', localPartSpy);
+        self.client.join('0', callbackSpy);
+        self.mock.on('line', function(line) {
+          if (line !== 'JOIN 0') return;
+          remoteChannels.forEach(function(remoteChan) {
+            self.mock.send(':testbot!~testbot@EXAMPLE.HOST PART ' + remoteChan + ' :Left all channels\r\n');
+          });
+        });
+        var i = 0;
+        self.client.on('part', function() {
+          i++;
+          if (i === localChannels.length) setTimeout(teardown, 10);
+        });
+
+        function teardown() {
+          expect(self.client.opt.channels).to.be.empty;
+          expect(callbackSpy.callCount).to.equal(0);
+          var standardMsg = {
+            prefix: 'testbot!~testbot@EXAMPLE.HOST',
+            nick: 'testbot',
+            user: '~testbot',
+            host: 'EXAMPLE.HOST',
+            command: 'PART',
+            rawCommand: 'PART',
+            commandType: 'normal'
+          };
+          var expected = remoteChannels.map(function(remoteChan) {
+            var message = Object.assign({args: [remoteChan, 'Left all channels']}, standardMsg);
+            return [remoteChan, 'testbot', 'Left all channels', message];
+          });
+          expect(localPartSpy.args).to.deep.equal(expected);
+        }
+      });
     });
   });
 });
