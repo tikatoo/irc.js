@@ -119,29 +119,33 @@ describe('Client', function() {
       }, 10);
     });
 
-    function sharedExamplesFor(channel, remoteChannel) {
-      function downcaseChannels(channels) {
-        return channels.map(function(x) { return x.toLowerCase(); });
+    function sharedExamplesFor(channels, remoteChannels) {
+      function downcaseChannels(chans) {
+        return chans.map(function(x) { return x.toLowerCase(); });
       }
 
-      it('works with given channel', function() {
-        this.client.join(channel);
+      it('sends correct command', function() {
+        this.client.join(channels.join(','));
         expect(this.sendSpy.args).to.deep.equal([
-          ['JOIN', channel]
+          ['JOIN', channels.join(',')]
         ]);
       });
 
       it('adds to opt.channels on successful join', function(done) {
         var self = this;
+        var i = 0;
         self.client.on('join', function() {
-          setTimeout(check, 10);
+          i++;
+          if (i === channels.length) setTimeout(check, 10);
         });
         expect(self.client.opt.channels).to.be.empty;
-        self.client.join(channel);
-        this.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChannel + '\r\n');
+        self.client.join(channels.join(','));
+        remoteChannels.forEach(function(remoteChan) {
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+        });
 
         function check() {
-          expect(downcaseChannels(self.client.opt.channels)).to.deep.equal([channel.toLowerCase()]);
+          expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(downcaseChannels(channels));
           done();
         }
       });
@@ -149,9 +153,12 @@ describe('Client', function() {
       it('calls given callback', function(done) {
         var self = this;
         expect(self.client.opt.channels).to.be.empty;
-        self.client.join(channel, check);
-        this.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChannel + '\r\n');
+        self.client.join(channels.join(','), check);
+        remoteChannels.forEach(function(remoteChan) {
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+        });
 
+        var i = 0;
         function check(nick, message) {
           expect(nick).to.equal('testbot');
           expect(message).to.deep.equal({
@@ -162,27 +169,35 @@ describe('Client', function() {
             commandType: 'normal',
             command: 'JOIN',
             rawCommand: 'JOIN',
-            args: [remoteChannel]
+            args: [remoteChannels[i]]
           });
-          done();
+          i++;
+          if (i === channels.length) done();
         }
       });
     }
 
     context('with same lowercase local and remote channel', function() {
-      sharedExamplesFor('#channel', '#channel');
+      sharedExamplesFor(['#channel'], ['#channel']);
     });
 
     context('with same mixed-case local and remote channel', function() {
-      sharedExamplesFor('#Channel', '#Channel');
+      sharedExamplesFor(['#Channel'], ['#Channel']);
     });
 
     context('with mixed-case local channel differing from lowercase remote channel', function() {
-      sharedExamplesFor('#Channel', '#channel');
+      sharedExamplesFor(['#Channel'], ['#channel']);
     });
 
     context('with lowercase local channel differing from mixed-case remote channel', function() {
-      sharedExamplesFor('#channel', '#Channel');
+      sharedExamplesFor(['#channel'], ['#Channel']);
+    });
+
+    context('with multiple channels', function() {
+      var localChannels = ['#channel', '#channel2', '#Test', '#Test2'];
+      var remoteChannels = ['#channel', '#Channel2', '#test', '#Test2'];
+
+      sharedExamplesFor(localChannels, remoteChannels);
     });
   });
 });

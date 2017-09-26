@@ -130,7 +130,7 @@ Client
     If ``message`` is a function it will be treated as a ``callback`` (i.e. both arguments to this function are optional).
     Outputs an error to console if it is already disconnected or disconnecting.
 
-    :param string message: an optional message to send when disconnecting.
+    :param string message: an optional message to send when disconnecting
     :param function callback: an optional callback
 
 .. js:function:: Client.send(command, arg1, arg2, ...)
@@ -138,14 +138,15 @@ Client
     Sends a raw message to the server.
     Generally speaking, it's best to use other, more specific methods with priority, unless you know what you're doing.
 
-.. js:function:: Client.join(channel, callback)
+.. js:function:: Client.join(channelList, callback)
 
     Joins the specified channel.
 
-    :param string channel: the channel to join
-    :param function callback: a callback to run once the bot has joined the channel.
+    :param string channelList: the channel(s) to join
+    :param function callback: a callback to automatically attach to `join#channelname` for each channel
 
-    ``channel`` supports multiple arguments in a space-separated string (as in the IRC protocol).
+    ``channel`` supports multiple channels in a comma-separated string (`as in the IRC protocol <https://tools.ietf.org/html/rfc2812#page-16>`_).
+    The callback is called for each channel, but does not include the ``channel`` parameter (see the ``join#channel`` event).
 
 .. js:function:: Client.part(channel, [message], callback)
 
@@ -153,7 +154,7 @@ Client
 
     :param string channel: the channel to part
     :param string message: an optional message to send upon leaving the channel
-    :param function callback: a callback to run once the bot has parted the channel.
+    :param function callback: a callback to run once the bot has parted the channel
 
 .. js:function:: Client.say(target, message)
 
