@@ -106,7 +106,7 @@ module.exports.MockPingTimer = function() {
   return new MockPingTimer();
 };
 
-var ircWithPingStub = proxyquire('../lib/irc', {util: stubbedUtil, './cycling_ping_timer.js': MockPingTimer})
+var ircWithPingStub = proxyquire('../lib/irc', {util: stubbedUtil, './cycling_ping_timer.js': MockPingTimer});
 
 function setupMocks(config, callback) {
   // both args optional
