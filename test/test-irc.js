@@ -8,12 +8,14 @@ var sinon = require('sinon');
 describe('Client', function() {
   describe('connect', function() {
     context('with standard greeting', function() {
-      function runTests(done, isSecure, useSecureObject) {
+      function runTests(done, isSecure, useSecureObject, skipObject) {
         var expected = testHelpers.getFixtures('basic');
         var port = isSecure ? 6697 : 6667;
         var mock = testHelpers.MockIrcd(port, 'utf-8', isSecure, true);
         var client;
-        if (isSecure && useSecureObject) {
+        if (skipObject) {
+          client = new irc.Client('localhost', 'testbot');
+        } else if (isSecure && useSecureObject) {
           client = new irc.Client('notlocalhost', 'testbot', {
             secure: {
               host: 'localhost',
@@ -48,16 +50,20 @@ describe('Client', function() {
         });
       }
 
-      it('connects, registers and quits', function(done) {
-        runTests(done, false, false);
+      it('connects, registers and quits with basic config', function(done) {
+        runTests(done, false, false, false);
       });
 
-      it('connects, registers and quits, securely', function(done) {
-        runTests(done, true, false);
+      it('connects, registers and quits with secure boolean config', function(done) {
+        runTests(done, true, false, false);
       });
 
-      it('connects, registers and quits, securely, with secure object', function(done) {
-        runTests(done, true, true);
+      it('connects, registers and quits, with secure object config', function(done) {
+        runTests(done, true, true, false);
+      });
+
+      it('connects, registers and quits with no config', function(done) {
+        runTests(done, false, false, true);
       });
     });
 
