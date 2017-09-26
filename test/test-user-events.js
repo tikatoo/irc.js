@@ -206,6 +206,53 @@ describe('Client', function() {
       });
 
       it('handles self-events properly');
+
+      context('topic', function() {
+        it('gets topic on joining a channel', function(done) {
+          var self = this;
+          var localTopicSpy = sinon.spy();
+          self.client.on('topic', localTopicSpy);
+          self.client.join('#test');
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
+          self.mock.send(':127.0.0.1 332 testbot #test :test topic\r\n');
+          self.mock.send(':127.0.0.1 333 testbot #test user1 1000000000\r\n');
+          self.client.on('raw', function(message) {
+            var chanData;
+            if (message.command === 'rpl_topic') {
+              expect(message).to.deep.equal({
+                prefix: '127.0.0.1',
+                server: '127.0.0.1',
+                commandType: 'reply',
+                command: 'rpl_topic',
+                rawCommand: '332',
+                args: ['testbot', '#test', 'test topic']
+              });
+              chanData = self.client.chanData('#test');
+              expect(chanData.topic).to.equal('test topic');
+            } else if (message.command === 'rpl_topicwhotime') {
+              var expectedMessage = {
+                prefix: '127.0.0.1',
+                server: '127.0.0.1',
+                commandType: 'reply',
+                command: 'rpl_topicwhotime',
+                rawCommand: '333',
+                args: ['testbot', '#test', 'user1', '1000000000']
+              };
+              expect(message).to.deep.equal(expectedMessage);
+              expect(localTopicSpy.args).to.deep.equal([[
+                '#test',
+                'test topic',
+                'user1',
+                message
+              ]]);
+              chanData = self.client.chanData('#test');
+              expect(chanData.topic).to.equal('test topic');
+              expect(chanData.topicBy).to.equal('user1');
+              done();
+            }
+          });
+        });
+      });
     });
 
     context('on kick', function() {
