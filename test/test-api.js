@@ -165,6 +165,25 @@ describe('Client', function() {
         }
       });
 
+      it('does not add duplicates to opt.channels', function(done) {
+        var self = this;
+        var i = 0;
+        self.client.on('join', function() {
+          i++;
+          if (i === channels.length) setTimeout(check, 10);
+        });
+        self.client.opt.channels = channels;
+        self.client.join(channels.join(','));
+        remoteChannels.forEach(function(remoteChan) {
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+        });
+
+        function check() {
+          expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(downcaseChannels(channels));
+          done();
+        }
+      });
+
       it('calls given callback', function(done) {
         var self = this;
         expect(self.client.opt.channels).to.be.empty;
