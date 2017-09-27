@@ -2,6 +2,7 @@
 [![npm](https://badge.fury.io/js/irc-upd.svg)](https://www.npmjs.com/package/irc-upd)
 [![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
 [![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
+[![Coverage Status](https://coveralls.io/repos/github/Throne3d/node-irc/badge.svg?branch=master)](https://coveralls.io/github/Throne3d/node-irc?branch=master)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://opensource.org/licenses/GPL-3.0)
 [![Join the chat at https://gitter.im/node-irc](https://badges.gitter.im/node-irc.svg)](https://gitter.im/node-irc)
 
