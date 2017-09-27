@@ -270,6 +270,7 @@ describe('Client', function() {
         var self = this;
         self.mock.on('line', function(line) {
           if (line !== 'WHOIS testbot') return;
+          // first arg is nick of target
           self.mock.send(':127.0.0.1 311 testbot testbot ~testbot EXAMPLE.HOST * :test name\r\n'); // whoisuser (user, host, ?, realname)
           self.mock.send(':127.0.0.1 312 testbot testbot 127.0.0.1 :Test server\r\n'); // whoisserver (server, serverinfo)
           self.mock.send(':127.0.0.1 317 testbot testbot 0 1000000000 :seconds idle, signon time\r\n'); // whoisidle (idle)
@@ -404,19 +405,8 @@ describe('Client', function() {
     expect(wrap).not.to.throw();
   });
 
-  it('handles topic-related events');
-
   it('handles channel-list-related events');
 
-  it('handles errors in the raw handler');
-
-  describe('command queue', function() {
-    it('works as intended');
-  });
-
-  it('.part parts');
   it('.action actions');
-  it('.notice notices');
-  it('.whois works');
   it('handles CTCP');
 });

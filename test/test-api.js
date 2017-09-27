@@ -426,4 +426,102 @@ describe('Client', function() {
       sharedExamplesFor(localChannels, remoteChannels);
     });
   });
+
+  describe('#list', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach);
+
+    beforeEach(function(done) {
+      var self = this;
+      setTimeout(function() {
+        self.sendSpy = sinon.spy();
+        self.client.send = self.sendSpy;
+        done();
+      }, 10);
+    });
+
+    it('sends given arguments directly', function() {
+      this.client.list('arg1', 'arg2');
+      expect(this.sendSpy.args).to.deep.equal([
+        ['LIST', 'arg1', 'arg2']
+      ]);
+    });
+  });
+
+  describe('#whois', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach);
+
+    // skip client whois handling
+    beforeEach(function(done) {
+      setTimeout(done, 10);
+    });
+
+    context('with stubbed send', function() {
+      beforeEach(function() {
+        this.sendSpy = sinon.spy();
+        this.client.send = this.sendSpy;
+      });
+
+      it('sends whois with given nick and no callback', function() {
+        this.client.whois('testbot2');
+        expect(this.sendSpy.args).to.deep.equal([
+          ['WHOIS', 'testbot2']
+        ]);
+      });
+
+      it('sends whois with given nick and callback', function() {
+        this.client.whois('testbot3', function() {});
+        expect(this.sendSpy.args).to.deep.equal([
+          ['WHOIS', 'testbot3']
+        ]);
+      });
+    });
+
+    function respondWhois(local, targetUsername) {
+      // first arg is nick of target
+      local.mock.send(':127.0.0.1 311 testbot ' + targetUsername + ' ~testbot2 EXAMPLE.HOST * :testbot2\r\n'); // whoisuser (user, host, ?, realname)
+      local.mock.send(':127.0.0.1 319 testbot ' + targetUsername + ' :#channel @#channel2\r\n'); // rpl_whoischannels (channels)
+      local.mock.send(':127.0.0.1 312 testbot ' + targetUsername + ' 127.0.0.1 :Test server\r\n'); // whoisserver (server, serverinfo)
+      local.mock.send(':127.0.0.1 301 testbot ' + targetUsername + ' :I\'m busy\r\n'); // away (away)
+      local.mock.send(':127.0.0.1 317 testbot ' + targetUsername + ' 100 1000000000 :seconds idle, signon time\r\n'); // whoisidle (idle)
+      local.mock.send(':127.0.0.1 318 testbot ' + targetUsername + ' :End of /WHOIS list.\r\n');
+    }
+
+    function whoisResponse(local, localNick, remoteNick, done) {
+      local.mock.on('line', function(line) {
+        if (line !== 'WHOIS ' + localNick) return;
+        respondWhois(local, remoteNick);
+      });
+
+      local.client.whois(localNick, function(data) {
+        expect(data).to.deep.equal({
+          user: '~testbot2',
+          host: 'EXAMPLE.HOST',
+          realname: 'testbot2',
+          server: '127.0.0.1',
+          serverinfo: 'Test server',
+          idle: '100',
+          nick: remoteNick,
+          channels: ['#channel', '@#channel2'],
+          away: 'I\'m busy'
+        });
+        done();
+      });
+    }
+
+    it('calls callback on whois response with lowercase nick', function(done) {
+      whoisResponse(this, 'testbot4', 'testbot4', done);
+    });
+
+    it('calls callback on whois response with mixed-case nick', function(done) {
+      whoisResponse(this, 'Testbot4', 'Testbot4', done);
+    });
+
+    it('calls callback on whois response with differing mixed-case server nick', function(done) {
+      whoisResponse(this, 'testbot4', 'Testbot4', done);
+    });
+
+    it('calls callback on whois response with differing lowercase server nick', function(done) {
+      whoisResponse(this, 'Testbot4', 'testbot4', done);
+    });
+  });
 });

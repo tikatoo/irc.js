@@ -290,6 +290,32 @@ describe('Client', function() {
           }
         });
       });
+
+      context('with creation time', function() {
+        it('handles creation time on joining a channel', function(done) {
+          var self = this;
+          self.client.on('raw', rawHandler);
+          self.client.join('#test');
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :#test\r\n');
+          self.mock.send(':127.0.0.1 329 testbot #test 1000000000\r\n');
+
+          function rawHandler(message) {
+            if (message.command !== 'rpl_creationtime') return;
+            var chanData;
+            expect(message).to.deep.equal({
+              prefix: '127.0.0.1',
+              server: '127.0.0.1',
+              commandType: 'reply',
+              command: 'rpl_creationtime',
+              rawCommand: '329',
+              args: ['testbot', '#test', '1000000000']
+            });
+            chanData = self.client.chanData('#test');
+            expect(chanData.created).to.equal('1000000000');
+            done();
+          }
+        });
+      });
     });
 
     context('on kick', function() {
