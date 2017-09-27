@@ -1,5 +1,6 @@
 var testHelpers = require('./helpers');
 var itWithCustomMock = testHelpers.itWithCustomMock;
+var joinChannelsBefore = testHelpers.joinChannelsBefore;
 var chai = require('chai');
 var expect = chai.expect;
 var sinon = require('sinon');
@@ -114,29 +115,6 @@ describe('Client', function() {
       ]);
     });
   });
-
-  function joinChannelsBefore(beforeEach, localChannels, remoteChannels) {
-    beforeEach(function(done) {
-      var self = this;
-      var i = 0;
-      self.client.on('join', function() {
-        i++;
-        if (i === localChannels.length) {
-          setTimeout(function() {
-            self.debugSpy.reset();
-            self.sendSpy.reset();
-            done();
-          }, 10);
-        }
-      });
-      localChannels.forEach(function(chan) {
-        self.client.join(chan);
-      });
-      remoteChannels.forEach(function(remoteChan) {
-        self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
-      });
-    });
-  }
 
   describe('#join', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);

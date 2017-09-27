@@ -245,3 +245,30 @@ module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach, con
     teardownMocks({client: this.client, mock: this.mock}, done);
   });
 };
+
+function joinChannels(local, localChannels, remoteChannels, done) {
+  var i = 0;
+  local.client.on('join', function() {
+    i++;
+    if (i === localChannels.length) {
+      setTimeout(function() {
+        if (local.debugSpy) local.debugSpy.reset();
+        if (local.sendSpy) local.sendSpy.reset();
+        done();
+      }, 10);
+    }
+  });
+  localChannels.forEach(function(chan) {
+    local.client.join(chan);
+  });
+  remoteChannels.forEach(function(remoteChan) {
+    local.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+  });
+}
+module.exports.joinChannels = joinChannels;
+
+module.exports.joinChannelsBefore = function (beforeEach, localChannels, remoteChannels) {
+  beforeEach(function(done) {
+    joinChannels(this, localChannels, remoteChannels, done);
+  });
+};

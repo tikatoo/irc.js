@@ -451,9 +451,119 @@ describe('Client', function() {
           }, 10);
         }
       });
+
+      var messageExample = {
+        prefix: 'testbot2!~testbot2@EXAMPLE2.HOST',
+        nick: 'testbot2',
+        user: '~testbot2',
+        host: 'EXAMPLE2.HOST',
+        command: 'PRIVMSG',
+        rawCommand: 'PRIVMSG',
+        commandType: 'normal'
+      };
+      var user = 'testbot2';
+      var msg = 'test message 1';
+
+      function channelMsgTest(local, localChannel, remoteChannel, callback) {
+        testHelpers.joinChannels(local, [localChannel], [remoteChannel], function() {
+          local.otherSpy = sinon.spy();
+          local.client.on('pm', local.otherSpy);
+          local.client.on('message#testbot', local.otherSpy);
+          local.client.on('message#testbot2', local.otherSpy);
+          local.messageSpy = sinon.spy();
+
+          var events = [
+            'message', 'message#',
+            'message' + remoteChannel,
+            'message' + remoteChannel.toLowerCase(),
+            'message' + localChannel,
+            'message' + localChannel.toLowerCase()
+          ];
+          var distinctEvents = [];
+          events.forEach(function(event) {
+            if (distinctEvents.indexOf(event) < 0) distinctEvents.push(event);
+          });
+
+          distinctEvents.forEach(function(event) {
+            local.client.on(event, function() {
+              var args = Array.prototype.slice.call(arguments);
+              args.unshift(event);
+              local.messageSpy.apply(local, args);
+            });
+          });
+
+          local.client.on('raw', tryEnd);
+          local.mock.send(':' + user + '!~testbot2@EXAMPLE2.HOST PRIVMSG ' + remoteChannel + ' :' + msg + '\r\n');
+
+          function tryEnd(message) {
+            if (message.command !== 'PRIVMSG') return;
+            setTimeout(function() {
+              expect(local.otherSpy.callCount).to.equal(0);
+              callback(local);
+            }, 10);
+          }
+        });
+      }
+
+      it('emits properly in lowercase channel', function(done) {
+        var localChannel = '#channel';
+        var remoteChannel = '#channel';
+        channelMsgTest(this, localChannel, remoteChannel, function(local) {
+          var message = Object.assign({args: [remoteChannel, 'test message 1']}, messageExample);
+          expect(local.messageSpy.args).to.deep.equal([
+            ['message', user, remoteChannel, msg, message],
+            ['message#', user, remoteChannel, msg, message],
+            ['message' + remoteChannel, user, msg, message]
+          ]);
+          done();
+        });
+      });
+
+      it('emits properly in lowercase channel joined mixed-case', function(done) {
+        var localChannel = '#Channel';
+        var remoteChannel = '#channel';
+        channelMsgTest(this, localChannel, remoteChannel, function(local) {
+          var message = Object.assign({args: [remoteChannel, 'test message 1']}, messageExample);
+          expect(local.messageSpy.args).to.deep.equal([
+            ['message', user, remoteChannel, msg, message],
+            ['message#', user, remoteChannel, msg, message],
+            ['message' + remoteChannel, user, msg, message]
+          ]);
+          done();
+        });
+      });
+
+      it('emits properly in mixed-case channel joined lowercase', function(done) {
+        var localChannel = '#channel';
+        var remoteChannel = '#Channel';
+        channelMsgTest(this, localChannel, remoteChannel, function(local) {
+          var message = Object.assign({args: [remoteChannel, 'test message 1']}, messageExample);
+          expect(local.messageSpy.args).to.deep.equal([
+            ['message', user, remoteChannel, msg, message],
+            ['message#', user, remoteChannel, msg, message],
+            ['message' + remoteChannel, user, msg, message],
+            ['message' + remoteChannel.toLowerCase(), user, msg, message]
+          ]);
+          done();
+        });
+      });
+
+      it('emits properly in mixed-case channel', function(done) {
+        var localChannel = '#Channel';
+        var remoteChannel = '#Channel';
+        channelMsgTest(this, localChannel, remoteChannel, function(local) {
+          var message = Object.assign({args: [remoteChannel, 'test message 1']}, messageExample);
+          expect(local.messageSpy.args).to.deep.equal([
+            ['message', user, remoteChannel, msg, message],
+            ['message#', user, remoteChannel, msg, message],
+            ['message' + remoteChannel, user, msg, message],
+            ['message' + remoteChannel.toLowerCase(), user, msg, message]
+          ]);
+          done();
+        });
+      });
     });
 
-    it('handles PRIVMSGs properly');
     it('handles INVITEs properly');
   });
 });
