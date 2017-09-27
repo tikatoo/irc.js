@@ -109,8 +109,9 @@ describe('Client', function() {
     context('with method called', function() {
       testHelpers.hookMockSetup(beforeEach, afterEach);
 
-      beforeEach(function() {
+      beforeEach(function(done) {
         this.client.activateFloodProtection(10);
+        setTimeout(done, 10);
       });
 
       sharedExamplesForCmdQueue();
