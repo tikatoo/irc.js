@@ -481,6 +481,7 @@ describe('Client', function() {
       local.mock.send(':127.0.0.1 311 testbot ' + targetUsername + ' ~testbot2 EXAMPLE.HOST * :testbot2\r\n'); // whoisuser (user, host, ?, realname)
       local.mock.send(':127.0.0.1 319 testbot ' + targetUsername + ' :#channel @#channel2\r\n'); // rpl_whoischannels (channels)
       local.mock.send(':127.0.0.1 312 testbot ' + targetUsername + ' 127.0.0.1 :Test server\r\n'); // whoisserver (server, serverinfo)
+      local.mock.send(':127.0.0.1 301 testbot ' + targetUsername + ' :I\'m busy\r\n'); // away (away)
       local.mock.send(':127.0.0.1 317 testbot ' + targetUsername + ' 100 1000000000 :seconds idle, signon time\r\n'); // whoisidle (idle)
       local.mock.send(':127.0.0.1 318 testbot ' + targetUsername + ' :End of /WHOIS list.\r\n');
     }
@@ -500,7 +501,8 @@ describe('Client', function() {
           serverinfo: 'Test server',
           idle: '100',
           nick: remoteNick,
-          channels: ['#channel', '@#channel2']
+          channels: ['#channel', '@#channel2'],
+          away: 'I\'m busy'
         });
         done();
       });
