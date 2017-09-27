@@ -192,11 +192,14 @@ module.exports.setupMocks = setupMocks;
 function teardownMocks(mockObj, callback) {
   teardownClient();
   function teardownClient() {
-    if (mockObj.client && mockObj.client.conn && !mockObj.client.conn.requestedDisconnect) {
-      mockObj.client.disconnect(teardownMock);
-    } else {
-      teardownMock();
+    if (mockObj.client) {
+      if (mockObj.client.conn && !mockObj.client.conn.requestedDisconnect) {
+        mockObj.client.disconnect(teardownMock);
+        return;
+      }
+      mockObj.client.disconnect();
     }
+    teardownMock();
   }
   function teardownMock() {
     if (mockObj.mock) {
