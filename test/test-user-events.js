@@ -564,6 +564,30 @@ describe('Client', function() {
       });
     });
 
-    it('handles INVITEs properly');
+    describe('INVITE', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+      it('handles invite from user correctly', function(done) {
+        var self = this;
+
+        self.client.on('invite', finish);
+        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST INVITE testbot :#channel\r\n');
+
+        function finish(channel, from, message) {
+          expect(channel).to.equal('#channel');
+          expect(from).to.equal('testbot2');
+          expect(message).to.deep.equal({
+            prefix: 'testbot2!~testbot2@EXAMPLE2.HOST',
+            nick: 'testbot2',
+            user: '~testbot2',
+            host: 'EXAMPLE2.HOST',
+            command: 'INVITE',
+            rawCommand: 'INVITE',
+            commandType: 'normal',
+            args: ['testbot', '#channel']
+          });
+          done();
+        }
+      });
+    });
   });
 });
