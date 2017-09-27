@@ -6,44 +6,57 @@ var expect = chai.expect;
 
 describe('Client', function() {
   describe('convertEncoding', function() {
-    context('with stubbed node-icu-charset-detector and iconv', function() {
-      it('works with valid data');
-      it('does not throw with sample data');
-      it('does not throw with invalid data');
-    });
+    function sharedExamplesFor(encoding) {
+      var clientConfig = {};
+      if (encoding) clientConfig.encoding = encoding;
 
-    context('without node-icu-charset-detector and iconv', function() {
-      it('does not throw with sample data', function() {
-        var ircWithoutCharset = proxyquire('../lib/irc', { 'node-icu-charset-detector': null, iconv: null });
-        var client = new ircWithoutCharset.Client('localhost', 'nick', {autoConnect: false});
-        checks.causesException.forEach(function(line) {
-          var wrap = function() {
-            client.convertEncoding(line);
-          };
-          expect(wrap).not.to.throw();
-        });
-      });
-    });
-
-    context('with proper node-icu-charset-detector and iconv', function() {
-      testHelpers.hookMockSetup(beforeEach, afterEach);
-      beforeEach(function() {
-        if (!this.client.canConvertEncoding()) this.skip();
+      context('with stubbed node-icu-charset-detector and iconv', function() {
+        it('works with valid data');
+        it('does not throw with sample data');
+        it('does not throw with invalid data');
       });
 
-      it('works with valid data');
-
-      it('does not throw with sample data', function() {
-        var client = this.client;
-        checks.causesException.forEach(function(line) {
-          var wrap = function() {
-            client.convertEncoding(line);
-          };
-          expect(wrap).not.to.throw();
+      context('without node-icu-charset-detector and iconv', function() {
+        it('does not throw with sample data', function() {
+          var ircWithoutCharset = proxyquire('../lib/irc', { 'node-icu-charset-detector': null, iconv: null });
+          var client = new ircWithoutCharset.Client('localhost', 'nick', Object.assign({autoConnect: false}, clientConfig));
+          checks.causesException.forEach(function(line) {
+            var wrap = function() {
+              client.convertEncoding(line);
+            };
+            expect(wrap).not.to.throw();
+          });
         });
       });
 
-      it('does not throw with invalid data');
+      context('with proper node-icu-charset-detector and iconv', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
+        beforeEach(function() {
+          if (!this.client.canConvertEncoding()) this.skip();
+        });
+
+        it('works with valid data');
+
+        it('does not throw with sample data', function() {
+          var client = this.client;
+          checks.causesException.forEach(function(line) {
+            var wrap = function() {
+              client.convertEncoding(line);
+            };
+            expect(wrap).not.to.throw();
+          });
+        });
+
+        it('does not throw with invalid data');
+      });
+    }
+
+    context('without encoding config', function() {
+      sharedExamplesFor();
+    });
+
+    context('with utf-8 encoding config', function() {
+      sharedExamplesFor('utf-8');
     });
   });
 
