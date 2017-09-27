@@ -347,6 +347,39 @@ describe('Client', function() {
       });
     });
 
+    describe('NOTICE', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+      it('handles notice from user correctly', function(done) {
+        var self = this;
+
+        self.client.out.debug = sinon.spy();
+        self.client.on('notice', finish);
+        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST NOTICE testbot :test message\r\n');
+
+        function finish(from, to, text, message) {
+          expect(from).to.equal('testbot2');
+          expect(to).to.equal('testbot');
+          expect(text).to.equal('test message');
+          expect(message).to.deep.equal({
+            prefix: 'testbot2!~testbot2@EXAMPLE2.HOST',
+            nick: 'testbot2',
+            user: '~testbot2',
+            host: 'EXAMPLE2.HOST',
+            command: 'NOTICE',
+            rawCommand: 'NOTICE',
+            commandType: 'normal',
+            args: ['testbot', 'test message']
+          });
+          setTimeout(function() {
+            expect(self.client.out.debug.args).to.deep.include(
+              ['GOT NOTICE from "testbot2": "test message"']
+            );
+            done();
+          }, 10);
+        }
+      });
+    });
+
     it('handles PRIVMSGs properly');
     it('handles INVITEs properly');
   });
