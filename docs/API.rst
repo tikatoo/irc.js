@@ -211,6 +211,8 @@ Client
     Activates flood protection manually after instantiation of the client.
     You can also use the ``floodProtection`` option while instantiating the client to enable flood protection then; see also ``floodProtectionDelay`` to set the message interval.
 
+    This should only be called once per Client instance, not on every connection, and cannot currently be deactivated.
+
     :param integer interval: an optional configuration for amount of time to wait between messages, defaults to client configuration value
 
 .. js:function:: Client.cancelAutoRenick()
