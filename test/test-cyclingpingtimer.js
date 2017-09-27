@@ -64,6 +64,17 @@ describe('CyclingPingTimer', function() {
     expect(this.cyclingPingTimer.loopingTimeout).to.be.null;
   });
 
+  it('does nothing if notified of activity when stopped', function() {
+    var self = this;
+    function wrap() {
+      self.cyclingPingTimer.notifyOfActivity();
+    }
+    expect(wrap).not.to.throw();
+    expect(self.debugSpy.args).to.be.empty;
+    expect(self.cyclingPingTimer.started).to.be.false;
+    expect(self.cyclingPingTimer.loopingTimeout).to.be.null;
+  });
+
   it('does not want ping early', function(done) {
     var cyclingPingTimer = this.cyclingPingTimer;
     cyclingPingTimer.start();
