@@ -352,27 +352,100 @@ describe('Client', function() {
       it('handles notice from user correctly', function(done) {
         var self = this;
 
+        var noticeSpy = sinon.spy();
         self.client.out.debug = sinon.spy();
-        self.client.on('notice', finish);
-        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST NOTICE testbot :test message\r\n');
+        self.client.on('notice', noticeSpy);
+        var i = 0;
+        self.client.on('notice', function() {
+          i++;
+          if (i === 2) finish();
+        });
+        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST NOTICE testbot :test message 1\r\n');
+        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST NOTICE TESTBOT :test message 2\r\n');
 
-        function finish(from, to, text, message) {
-          expect(from).to.equal('testbot2');
-          expect(to).to.equal('testbot');
-          expect(text).to.equal('test message');
-          expect(message).to.deep.equal({
+        function finish() {
+          var exampleMsg = {
             prefix: 'testbot2!~testbot2@EXAMPLE2.HOST',
             nick: 'testbot2',
             user: '~testbot2',
             host: 'EXAMPLE2.HOST',
             command: 'NOTICE',
             rawCommand: 'NOTICE',
-            commandType: 'normal',
-            args: ['testbot', 'test message']
-          });
+            commandType: 'normal'
+          };
+          expect(noticeSpy.args).to.deep.equal([
+            [
+              'testbot2',
+              'testbot',
+              'test message 1',
+              Object.assign({args: ['testbot', 'test message 1']}, exampleMsg)
+            ],
+            [
+              'testbot2',
+              'TESTBOT',
+              'test message 2',
+              Object.assign({args: ['TESTBOT', 'test message 2']}, exampleMsg)
+            ]
+          ]);
           setTimeout(function() {
             expect(self.client.out.debug.args).to.deep.include(
-              ['GOT NOTICE from "testbot2": "test message"']
+              ['GOT NOTICE from "testbot2": "test message 1"'],
+              ['GOT NOTICE from "testbot2": "test message 2"']
+            );
+            done();
+          }, 10);
+        }
+      });
+    });
+
+    describe('PRIVMSG', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+      it('handles privmsg from user correctly', function(done) {
+        var self = this;
+
+        var pmSpy = sinon.spy();
+        var messageSpy = sinon.spy();
+        var otherSpy = sinon.spy();
+        self.client.out.debug = sinon.spy();
+        self.client.on('pm', pmSpy);
+        self.client.on('message', messageSpy);
+        self.client.on('message#testbot2', otherSpy);
+        self.client.on('message#testbot', otherSpy);
+        self.client.on('message#TESTBOT', otherSpy);
+        var i = 0;
+        self.client.on('message', function() {
+          i++;
+          if (i === 2) setTimeout(finish, 10);
+        });
+        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST PRIVMSG testbot :test message 1\r\n');
+        self.mock.send(':testbot2!~testbot2@EXAMPLE2.HOST PRIVMSG TESTBOT :test message 2\r\n');
+
+        function finish() {
+          var exampleMsg = {
+            prefix: 'testbot2!~testbot2@EXAMPLE2.HOST',
+            nick: 'testbot2',
+            user: '~testbot2',
+            host: 'EXAMPLE2.HOST',
+            command: 'PRIVMSG',
+            rawCommand: 'PRIVMSG',
+            commandType: 'normal'
+          };
+          var msg1 = Object.assign({args: ['testbot', 'test message 1']}, exampleMsg);
+          var msg2 = Object.assign({args: ['TESTBOT', 'test message 2']}, exampleMsg);
+          expect(messageSpy.args).to.deep.equal([
+            ['testbot2', 'testbot', 'test message 1', msg1],
+            ['testbot2', 'TESTBOT', 'test message 2', msg2]
+          ]);
+          expect(pmSpy.args).to.deep.equal([
+            ['testbot2', 'test message 1', msg1],
+            ['testbot2', 'test message 2', msg2]
+          ]);
+
+          expect(otherSpy.args).to.be.empty;
+          setTimeout(function() {
+            expect(self.client.out.debug.args).to.deep.include(
+              ['GOT MESSAGE from "testbot2": "test message 1"'],
+              ['GOT MESSAGE from "testbot2": "test message 2"']
             );
             done();
           }, 10);
