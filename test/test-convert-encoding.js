@@ -20,15 +20,29 @@ describe('Client', function() {
           var wrap = function() {
             client.convertEncoding(line);
           };
-          expect(wrap).not.to.throw;
+          expect(wrap).not.to.throw();
         });
       });
     });
 
     context('with proper node-icu-charset-detector and iconv', function() {
-      // TODO: skip if cannot require
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+      beforeEach(function() {
+        if (!this.client.canConvertEncoding()) this.skip();
+      });
+
       it('works with valid data');
-      it('does not throw with sample data');
+
+      it('does not throw with sample data', function() {
+        var client = this.client;
+        checks.causesException.forEach(function(line) {
+          var wrap = function() {
+            client.convertEncoding(line);
+          };
+          expect(wrap).not.to.throw();
+        });
+      });
+
       it('does not throw with invalid data');
     });
   });

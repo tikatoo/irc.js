@@ -130,7 +130,7 @@ Client
     If ``message`` is a function it will be treated as a ``callback`` (i.e. both arguments to this function are optional).
     Outputs an error to console if it is already disconnected or disconnecting.
 
-    :param string message: an optional message to send when disconnecting.
+    :param string message: an optional message to send when disconnecting
     :param function callback: an optional callback
 
 .. js:function:: Client.send(command, arg1, arg2, ...)
@@ -138,22 +138,29 @@ Client
     Sends a raw message to the server.
     Generally speaking, it's best to use other, more specific methods with priority, unless you know what you're doing.
 
-.. js:function:: Client.join(channel, callback)
+.. js:function:: Client.join(channelList, [callback])
 
     Joins the specified channel.
 
-    :param string channel: the channel to join
-    :param function callback: a callback to run once the bot has joined the channel.
+    :param string channelList: the channel(s) to join
+    :param function callback: an optional callback to automatically attach to ``join#channelname`` for each channel
 
-    ``channel`` supports multiple arguments in a space-separated string (as in the IRC protocol).
+    ``channelList`` supports multiple channels in a comma-separated string (`as in the IRC protocol <https://tools.ietf.org/html/rfc2812#page-16>`_).
+    The callback is called for each channel, but does not include the ``channel`` parameter (see the ``join#channel`` event).
 
-.. js:function:: Client.part(channel, [message], callback)
+    Passing ``'0'`` to the ``channelList`` parameter will send ``JOIN 0`` to the server.
+    As in the IRC spec, this will cause the client to part from all current channels.
+    In such a case, the callback will not be called; you should instead bind to the ``part`` event to keep track of the progress made.
+
+.. js:function:: Client.part(channel, [message], [callback])
 
     Parts the specified channel.
 
-    :param string channel: the channel to part
+    :param string channelList: the channel(s) to part
     :param string message: an optional message to send upon leaving the channel
-    :param function callback: a callback to run once the bot has parted the channel.
+    :param function callback: a optional callback to automatically attach to ``part#channelname`` for each channel
+
+    As with ``Client.join``, the ``channelList`` parameter supports multiple channels in a comma-separated string, for each of which the callback will be called.
 
 .. js:function:: Client.say(target, message)
 
@@ -346,6 +353,8 @@ Events
     ``function (nick, reason, channels, message) { }``
 
     Emitted when a user disconnects from the IRC server, leaving the specified array of channels.
+    Channels are emitted case-lowered.
+
     See the ``raw`` event for details on the ``message`` object.
 
 .. js:data:: 'kick'
@@ -368,6 +377,8 @@ Events
 
     Emitted when a user is killed from the IRC server.
     The ``channels`` parameter is an array of channels the killed user was in, those known to the client (that is, the ones the bot was present in).
+    Channels are emitted case-lowered.
+
     See the ``raw`` event for details on the ``message`` object.
 
 .. js:data:: 'nick'
@@ -375,6 +386,8 @@ Events
     ``function (oldnick, newnick, channels, message) { }``
 
     Emitted when a user changes nick, with the channels the user is known to be in.
+    Channels are emitted case-lowered.
+
     See the ``raw`` event for details on the ``message`` object.
 
 .. js:data:: '+mode'

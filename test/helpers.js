@@ -5,15 +5,13 @@ var fs = require('fs');
 var net = require('net');
 var tls = require('tls');
 var util = require('util');
-var irc = require('../lib/irc');
 var EventEmitter = require('events').EventEmitter;
 var sinon = require('sinon');
 var proxyquire = require('proxyquire');
-var stubbedUtil = {log: function(){}};
-var ircWithStubbedOutput = proxyquire('../lib/irc', {util: stubbedUtil});
+var stubbedUtil = {log: null};
+var irc = proxyquire('../lib/irc', {util: stubbedUtil});
 
-module.exports.irc = irc;
-module.exports.ircWithStubbedOutput = ircWithStubbedOutput;
+module.exports.ircWithStubbedOutput = irc;
 
 var MockIrcd = function(port, encoding, isSecure, quiet) {
     var self = this;
@@ -65,7 +63,11 @@ var MockIrcd = function(port, encoding, isSecure, quiet) {
 util.inherits(MockIrcd, EventEmitter);
 
 MockIrcd.prototype.send = function(data) {
-    this.emit('send', data);
+  if (data.slice(-2) !== '\r\n') {
+    console.log("WARNING: mock.send called without trailing \\r\\n");
+    console.log("data:", data);
+  }
+  this.emit('send', data);
 };
 
 MockIrcd.prototype.close = function() {
@@ -87,8 +89,28 @@ module.exports.getFixtures = function(testSuite) {
 };
 
 module.exports.MockIrcd = function(port, encoding, isSecure, quiet) {
-    return new MockIrcd(port, encoding, isSecure, quiet);
+  return new MockIrcd(port, encoding, isSecure, quiet);
 };
+
+var pingTimerStubs = {
+  notifyOfActivity: sinon.stub(),
+  stop: sinon.stub(),
+  start: sinon.stub()
+};
+
+var MockPingTimer = function() {
+  for (var key in pingTimerStubs) {
+    pingTimerStubs[key].reset();
+  }
+  Object.assign(this, pingTimerStubs);
+};
+util.inherits(MockPingTimer, EventEmitter);
+
+module.exports.MockPingTimer = function() {
+  return new MockPingTimer();
+};
+
+var ircWithPingStub = proxyquire('../lib/irc', {util: stubbedUtil, './cycling_ping_timer.js': MockPingTimer});
 
 function setupMocks(config, callback) {
   // both args optional
@@ -99,6 +121,7 @@ function setupMocks(config, callback) {
   // - callbackEarly (default false): calls callback when initialization finished instead ofon  client registered event
   // - disableOutput (default true): stubs client's util.log to reduce output clutter
   // - withoutServer (default false): skips server, makes client not autoConnect by default and enables callbackEarly
+  // - stubTimer (default false): stubs the cyclingPingTimer
 
   if (typeof callback === 'undefined' && typeof config === 'function') { callback = config; config = undefined; }
   config = config || {};
@@ -106,7 +129,7 @@ function setupMocks(config, callback) {
   config.client = config.client || {};
   config.server = config.server || {};
 
-  var defaultMeta = {autoGreet: true, callbackEarly: false, disableOutput: true, withoutServer: false};
+  var defaultMeta = {autoGreet: true, callbackEarly: false, disableOutput: true, withoutServer: false, stubTimer: false};
   var defaultClient = {debug: true};
   var defaultServer = {};
 
@@ -120,16 +143,19 @@ function setupMocks(config, callback) {
   var serverConfig = Object.assign(defaultServer, config.server);
 
   var quiet = metaConfig.disableOutput;
+  var stubTimer = metaConfig.stubTimer;
 
-  var lineSpy;
-  var mock;
+  var mockObj = {};
+
   if (!metaConfig.withoutServer) {
-    lineSpy = sinon.spy();
-    mock = module.exports.MockIrcd(serverConfig.port, serverConfig.encoding, serverConfig.isSecure, quiet);
+    var lineSpy = sinon.spy();
+    var mock = module.exports.MockIrcd(serverConfig.port, serverConfig.encoding, serverConfig.isSecure, quiet);
     mock.on('line', lineSpy);
     mock.server.on('connection', function() {
       if (metaConfig.autoGreet) mock.greet();
     });
+    mockObj.mock = mock;
+    mockObj.lineSpy = lineSpy;
   }
 
   var clientServer = 'localhost';
@@ -143,10 +169,19 @@ function setupMocks(config, callback) {
     delete clientConfig.nick;
   }
 
-  var lib = (quiet) ? ircWithStubbedOutput : irc;
+  if (quiet) {
+    stubbedUtil.log = sinon.stub();
+  } else {
+    stubbedUtil.log = util.log.bind(util);
+  }
+  var lib = irc;
+  if (stubTimer) {
+    lib = ircWithPingStub;
+    mockObj.pingTimerStubs = pingTimerStubs;
+  }
   var client = new lib.Client(clientServer, clientNick, clientConfig);
+  mockObj.client = client;
 
-  var mockObj = {mock: mock, client: client, lineSpy: lineSpy};
   client.once('registered', function() {
     if (!metaConfig.callbackEarly) callback(mockObj);
   });
@@ -208,5 +243,32 @@ module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach, con
 
   afterEach(function(done) {
     teardownMocks({client: this.client, mock: this.mock}, done);
+  });
+};
+
+function joinChannels(local, localChannels, remoteChannels, done) {
+  var i = 0;
+  local.client.on('join', function() {
+    i++;
+    if (i === localChannels.length) {
+      setTimeout(function() {
+        if (local.debugSpy) local.debugSpy.reset();
+        if (local.sendSpy) local.sendSpy.reset();
+        done();
+      }, 10);
+    }
+  });
+  localChannels.forEach(function(chan) {
+    local.client.join(chan);
+  });
+  remoteChannels.forEach(function(remoteChan) {
+    local.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+  });
+}
+module.exports.joinChannels = joinChannels;
+
+module.exports.joinChannelsBefore = function (beforeEach, localChannels, remoteChannels) {
+  beforeEach(function(done) {
+    joinChannels(this, localChannels, remoteChannels, done);
   });
 };

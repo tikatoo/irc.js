@@ -217,9 +217,73 @@ describe('CyclingPingTimer', function() {
 describe('Client', function() {
   describe('ping timer', function() {
     context('with stubs', function() {
-      it('sends ping when timer emits wantPing');
-      it('notifies timer of activity when PONG received');
-      it('disconnects when timer emits pingTimeout');
+      testHelpers.hookMockSetup(beforeEach, afterEach, {meta: {stubTimer: true}});
+      beforeEach(function() {
+        this.pingSpy = this.lineSpy.withArgs(sinon.match(/^PING/i));
+      });
+
+      it('sends ping when timer emits wantPing', function(done) {
+        var self = this;
+        self.mock.on('line', function(line) {
+          if (line === 'PING 1') teardown();
+        });
+
+        self.client.conn.cyclingPingTimer.emit('wantPing');
+
+        function teardown() {
+          expect(self.pingSpy.callCount).to.equal(1);
+          done();
+        }
+      });
+
+      it('notifies timer of activity when PONG received', function(done) {
+        var self = this;
+        expect(self.pingTimerStubs.notifyOfActivity.callCount).to.equal(1);
+        expect(self.pingTimerStubs.start.callCount).to.equal(1);
+        expect(self.pingTimerStubs.stop.callCount).to.equal(0);
+
+        self.client.on('raw', function(message) {
+          if (message.command !== 'PONG') return;
+          expect(message.args).to.deep.equal(['1']);
+          teardown();
+        });
+
+        self.mock.send(':localhost PONG 1\r\n');
+
+        function teardown() {
+          expect(self.pingTimerStubs.notifyOfActivity.callCount).to.equal(2);
+          expect(self.pingTimerStubs.start.callCount).to.equal(1);
+          expect(self.pingTimerStubs.stop.callCount).to.equal(0);
+          expect(self.pingSpy.callCount).to.equal(0);
+          done();
+        }
+      });
+
+      it('disconnects when timer emits pingTimeout', function(done) {
+        var self = this;
+
+        self.client.conn.once('close', function() {
+          teardown();
+        });
+
+        expect(self.pingTimerStubs.notifyOfActivity.callCount).to.equal(1);
+        expect(self.pingTimerStubs.start.callCount).to.equal(1);
+        expect(self.pingTimerStubs.stop.callCount).to.equal(0);
+        expect(self.pingSpy.callCount).to.equal(0);
+
+        self.client.conn.cyclingPingTimer.emit('pingTimeout');
+
+        function teardown() {
+          expect(self.pingTimerStubs.notifyOfActivity.callCount).to.equal(1);
+          expect(self.pingTimerStubs.start.callCount).to.equal(1);
+          expect(self.pingTimerStubs.stop.callCount).to.equal(2); // one for end(), one for on(close)
+          expect(self.pingSpy.callCount).to.equal(0);
+          // client attempts reconnect:
+          expect(self.client.conn).to.be.null;
+          expect(self.client.retryTimeout).to.be.ok;
+          done();
+        }
+      });
     });
 
     context('with server', function() {
@@ -230,9 +294,7 @@ describe('Client', function() {
       testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
 
       beforeEach(function() {
-        this.lineSpy = sinon.spy();
         this.pingSpy = this.lineSpy.withArgs(sinon.match(/^PING/i));
-        this.mock.on('line', this.lineSpy);
         this.cyclingPingTimer = this.client.conn.cyclingPingTimer;
       });
 

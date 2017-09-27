@@ -223,18 +223,21 @@ describe('Client', function() {
         });
 
         context('shorter tests', function() {
-          function basicRenickTest(local, expected, onFinish) {
+          function basicRenickTest(local, expected, onFinish, repeatRebuke) {
             var rebuked = false;
+            var greeted = false;
             var mock = local.mock;
             var nickSpy = local.nickSpy;
             mock.on('line', function(line) {
               var args = line.split(' ');
               if (args[0] !== 'NICK') return;
               if (args[1] === 'testbot') {
-                if (!rebuked) {
+                if (repeatRebuke || !rebuked) {
                   rebuked = true;
                   mock.send(':localhost 433 * testbot :Nickname is already in use.\r\n');
                 }
+              } else if (!greeted) {
+                mock.greet(args[1]);
               }
               if (expected.length === nickSpy.args.length) {
                 expect(nickSpy.args).to.deep.equal(expected);
@@ -254,7 +257,7 @@ describe('Client', function() {
             this.nickSpy = this.lineSpy.withArgs(sinon.match(/^NICK/i));
           });
 
-          it('only renicks given amount', function(done) {
+          it('only renicks given amount without further response', function(done) {
             basicRenickTest(
               this,
               [
@@ -265,6 +268,21 @@ describe('Client', function() {
                 ['NICK testbot']
               ],
               done
+            );
+          });
+
+          it('only renicks given amount with further response', function(done) {
+            basicRenickTest(
+              this,
+              [
+                ['NICK testbot'],
+                ['NICK testbot1'],
+                ['NICK testbot'],
+                ['NICK testbot'],
+                ['NICK testbot']
+              ],
+              done,
+              true
             );
           });
 

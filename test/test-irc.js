@@ -8,12 +8,14 @@ var sinon = require('sinon');
 describe('Client', function() {
   describe('connect', function() {
     context('with standard greeting', function() {
-      function runTests(done, isSecure, useSecureObject) {
+      function runTests(done, isSecure, useSecureObject, skipObject) {
         var expected = testHelpers.getFixtures('basic');
         var port = isSecure ? 6697 : 6667;
         var mock = testHelpers.MockIrcd(port, 'utf-8', isSecure, true);
         var client;
-        if (isSecure && useSecureObject) {
+        if (skipObject) {
+          client = new irc.Client('localhost', 'testbot');
+        } else if (isSecure && useSecureObject) {
           client = new irc.Client('notlocalhost', 'testbot', {
             secure: {
               host: 'localhost',
@@ -48,16 +50,20 @@ describe('Client', function() {
         });
       }
 
-      it('connects, registers and quits', function(done) {
-        runTests(done, false, false);
+      it('connects, registers and quits with basic config', function(done) {
+        runTests(done, false, false, false);
       });
 
-      it('connects, registers and quits, securely', function(done) {
-        runTests(done, true, false);
+      it('connects, registers and quits with secure boolean config', function(done) {
+        runTests(done, true, false, false);
       });
 
-      it('connects, registers and quits, securely, with secure object', function(done) {
-        runTests(done, true, true);
+      it('connects, registers and quits, with secure object config', function(done) {
+        runTests(done, true, true, false);
+      });
+
+      it('connects, registers and quits with no config', function(done) {
+        runTests(done, false, false, true);
       });
     });
 
@@ -147,7 +153,149 @@ describe('Client', function() {
       });
     });
 
-    it('client joins opt.channels on receiving motd');
+    context('with motd', function() {
+      function sendMotd(mock, nick, messages) {
+        messages = messages || ['Message'];
+        mock.send(':127.0.0.1 375 ' + nick + ' :- 127.0.0.1 Message of the Day -\r\n');
+        messages.forEach(function(line) {
+          mock.send(':127.0.0.1 372 ' + nick + ' :- ' + line + '\r\n');
+        });
+        mock.send(':127.0.0.1 376 ' + nick + ' :End of /MOTD command.\r\n');
+      }
+
+      function verifyMotd(client, motd, motdLines) {
+        var expected = '- 127.0.0.1 Message of the Day -\n';
+        expected += motdLines.map(function(x) { return '- ' + x; }).join('\n') + '\n';
+        expected += 'End of /MOTD command.\n';
+        expect(motd).to.equal(expected);
+        expect(client.motd).to.equal(expected);
+      }
+
+      function sharedTests() {
+        it('emits motd', function(done) {
+          var self = this;
+          var motdLines = [
+            'Line 1',
+            'This is some more text as a test',
+            'last line'
+          ];
+          self.client.on('motd', function(motd) {
+            verifyMotd(self.client, motd, motdLines);
+            done();
+          });
+          sendMotd(self.mock, 'testbot', motdLines);
+        });
+
+        it('overwrites old motd on new connection', function(done) {
+          var self = this;
+          var first = ['Sample'];
+          var second = ['Sample text'];
+
+          self.client.once('motd', verifyFirst);
+          sendMotd(self.mock, 'testbot', first);
+
+          function verifyFirst(motd) {
+            verifyMotd(self.client, motd, first);
+            self.client.disconnect(setupSecond);
+          }
+
+          function setupSecond() {
+            self.client.connect();
+            self.client.on('registered', function() {
+              self.client.once('motd', verifySecond);
+              sendMotd(self.mock, 'testbot', second);
+            });
+          }
+
+          function verifySecond(motd) {
+            verifyMotd(self.client, motd, second);
+            done();
+          }
+        });
+      }
+
+      context('with opt.channels', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {channels: ['#test', '#test2']}});
+
+        sharedTests();
+
+        beforeEach(function() {
+          this.joinSpy = this.lineSpy.withArgs(sinon.match(/^JOIN/i));
+        });
+
+        it('joins specified channels on motd', function(done) {
+          var expected = [['JOIN #test'], ['JOIN #test2']];
+          var self = this;
+          sendMotd(self.mock, 'testbot');
+          self.client.on('motd', function() {
+            self.client.send('PING', 'endtest');
+          });
+          self.mock.on('line', function(line) {
+            if (line !== 'PING endtest') return;
+            expect(self.joinSpy.args).to.deep.equal(expected);
+            done();
+          });
+        });
+      });
+
+      context('without opt.channels', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach);
+
+        sharedTests();
+
+        beforeEach(function() {
+          this.joinSpy = this.lineSpy.withArgs(sinon.match(/^JOIN/i));
+        });
+
+        it('does not join any channels on motd', function(done) {
+          var expected = [];
+          var self = this;
+          sendMotd(self.mock, 'testbot');
+          self.client.on('motd', function() {
+            self.client.send('PING', 'endtest');
+          });
+          self.mock.on('line', function(line) {
+            if (line !== 'PING endtest') return;
+            expect(self.joinSpy.args).to.deep.equal(expected);
+            done();
+          });
+        });
+      });
+    });
+
+    describe('whois', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      it('requests and processes own whois data', function(done) {
+        var self = this;
+        self.mock.on('line', function(line) {
+          if (line !== 'WHOIS testbot') return;
+          self.mock.send(':127.0.0.1 311 testbot testbot ~testbot EXAMPLE.HOST * :test name\r\n'); // whoisuser (user, host, ?, realname)
+          self.mock.send(':127.0.0.1 312 testbot testbot 127.0.0.1 :Test server\r\n'); // whoisserver (server, serverinfo)
+          self.mock.send(':127.0.0.1 317 testbot testbot 0 1000000000 :seconds idle, signon time\r\n'); // whoisidle (idle)
+          self.mock.send(':127.0.0.1 318 testbot testbot :End of /WHOIS list.\r\n');
+        });
+        self.client.on('whois', function(data) {
+          expect(data).to.deep.equal({
+            user: '~testbot',
+            host: 'EXAMPLE.HOST',
+            realname: 'test name',
+            server: '127.0.0.1',
+            serverinfo: 'Test server',
+            idle: '0',
+            nick: 'testbot'
+          });
+
+          setImmediate(function() {
+            expect(self.client.nick).to.equal('testbot');
+            expect(self.client.hostMask).to.equal('~testbot@EXAMPLE.HOST');
+            expect(self.client.maxLineLength).to.equal(497 - 7 - 21);
+
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('_splitLongLines', function() {
@@ -220,7 +368,29 @@ describe('Client', function() {
     });
   });
 
-  it('emits error events properly');
+  describe('errors', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {client: {server: '127.0.0.1'}});
+    specify('are emitted appropriately', function(done) {
+      var mock = this.mock;
+      var client = this.client;
+
+      client.on('error', function(msg) {
+        var expected = {
+          prefix: '127.0.0.1',
+          server: '127.0.0.1',
+          rawCommand: '421',
+          command: 'err_unknowncommand',
+          commandType: 'error',
+          args: ['testbot', 'test', 'Unknown command']
+        };
+        expect(msg).to.deep.equal(expected);
+        done();
+      });
+
+      client.send('test');
+      mock.send(':127.0.0.1 421 testbot test :Unknown command\r\n');
+    });
+  });
 
   itWithCustomMock('does not crash when disconnected and sending messages',
   {meta: {withoutServer: true}},
@@ -231,7 +401,7 @@ describe('Client', function() {
       client.end();
       client.say('#channel', 'message3');
     }
-    expect(wrap).not.to.throw;
+    expect(wrap).not.to.throw();
   });
 
   it('handles topic-related events');
