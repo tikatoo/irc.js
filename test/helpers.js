@@ -190,11 +190,23 @@ function setupMocks(config, callback) {
 module.exports.setupMocks = setupMocks;
 
 function teardownMocks(mockObj, callback) {
-  mockObj.client.disconnect();
-  if (mockObj.mock) {
-    mockObj.mock.close(function() { callback(); });
-  } else {
-    callback();
+  teardownClient();
+  function teardownClient() {
+    if (mockObj.client) {
+      if (mockObj.client.conn && !mockObj.client.conn.requestedDisconnect) {
+        mockObj.client.disconnect(teardownMock);
+        return;
+      }
+      mockObj.client.disconnect();
+    }
+    teardownMock();
+  }
+  function teardownMock() {
+    if (mockObj.mock) {
+      mockObj.mock.close(function() { callback(); });
+    } else {
+      callback();
+    }
   }
 }
 module.exports.teardownMocks = teardownMocks;
