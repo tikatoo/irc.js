@@ -451,6 +451,30 @@ describe('Client', function() {
           }, 10);
         }
       });
+
+      it('handles short/invalid notices without crashing', function(done) {
+        var self = this;
+
+        self.client.out.debug = sinon.spy();
+        self.client.on('notice', finish);
+        self.mock.send(':127.0.0.1 NOTICE \r\n');
+
+        function finish(from, to, text, message) {
+          var msg = {
+            prefix: '127.0.0.1',
+            server: '127.0.0.1',
+            command: 'NOTICE',
+            rawCommand: 'NOTICE',
+            commandType: 'normal',
+            args: []
+          };
+          expect(from).to.be.undefined;
+          expect(to).to.be.null;
+          expect(text).to.equal('');
+          expect(message).to.deep.equal(msg);
+          done();
+        }
+      });
     });
 
     describe('PRIVMSG', function() {
