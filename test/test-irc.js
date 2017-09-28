@@ -340,6 +340,38 @@ describe('Client', function() {
         }
       });
 
+      it('errors if server NAKs SASL', function(done) {
+        var self = this;
+        self.errorSpy = sinon.spy();
+        self.client.on('error', self.errorSpy);
+        self.mock.on('line', function(line) {
+          if (line !== 'CAP REQ sasl') return;
+          self.mock.send(':127.0.0.1 CAP * NAK :sasl\r\n');
+        });
+        self.client.on('raw', function(message) {
+          if (message.rawCommand === 'CAP') end();
+        });
+        function end() {
+          self.client.removeListener('error', self.errorSpy);
+          expect(self.sendStub.args).to.deep.equal([
+            ['CAP', 'REQ', 'sasl'],
+            ['NICK', 'testbot'],
+            ['USER', 'nodebot', 8, '*', 'node']
+          ]);
+          expect(self.errorSpy.args).to.deep.equal([
+            [{
+              prefix: '127.0.0.1',
+              server: '127.0.0.1',
+              command: 'CAP',
+              rawCommand: 'CAP',
+              commandType: 'normal',
+              args: ['*', 'NAK', 'sasl']
+            }]
+          ]);
+          done();
+        }
+      });
+
       function mockSaslAccepts(local, authMessage, end) {
         local.mock.on('line', function(line) {
           if (line === 'CAP REQ sasl') {
