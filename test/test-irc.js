@@ -263,6 +263,185 @@ describe('Client', function() {
       });
     });
 
+    context('with isupport', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      context('when parsing individual supports', function() {
+        function iSupportIndividual(local, supportString, callback) {
+          local.mock.send(':127.0.0.1 005 testbot ' + supportString + ' :are supported by this server\r\n');
+          local.client.on('raw', function(message) {
+            if (message.rawCommand !== '005') return;
+            expect(message.command).to.equal('rpl_isupport');
+            expect(message.args).to.deep.equal([
+              'testbot', supportString, 'are supported by this server'
+            ]);
+            setTimeout(function() { callback(local); }, 10);
+          });
+        }
+
+        it('parses chanlimit', function(done) {
+          expect(this.client.supported.channel.limit['#']).not.to.equal(50);
+          iSupportIndividual(this, 'CHANLIMIT=#:50', check);
+          function check(local) {
+            expect(local.client.supported.channel.limit['#']).to.equal(50);
+            done();
+          }
+        });
+
+        it('parses chanmodes', function(done) {
+          var expectedChannelModes = {
+            a: 'eIbq',
+            b: 'k',
+            c: 'flj',
+            d: 'CFLPQTcgimnprstz'
+          };
+          expect(this.client.supported.channel.modes).not.to.deep.equal(expectedChannelModes);
+          iSupportIndividual(this, 'CHANMODES=eIbq,k,flj,CFLPQTcgimnprstz', check);
+          function check(local) {
+            expect(local.client.supported.channel.modes).to.deep.equal(expectedChannelModes);
+            done();
+          }
+        });
+
+        it('parses chantypes', function(done) {
+          expect(this.client.supported.channel.types).not.to.equal('#');
+          iSupportIndividual(this, 'CHANTYPES=#', check);
+          function check(local) {
+            expect(local.client.supported.channel.types).to.equal('#');
+            done();
+          }
+        });
+
+        it('parses channellen', function(done) {
+          expect(this.client.supported.channel.length).not.to.equal(50);
+          iSupportIndividual(this, 'CHANNELLEN=50', check);
+          function check(local) {
+            expect(local.client.supported.channel.length).to.equal(50);
+            done();
+          }
+        });
+
+        it('parses maxlist', function(done) {
+          expect(this.client.supported.maxlist.bqeI).not.to.equal(100);
+          iSupportIndividual(this, 'MAXLIST=bqeI:100', check);
+          function check(local) {
+            expect(local.client.supported.maxlist.bqeI).to.equal(100);
+            done();
+          }
+        });
+
+        it('parses nicklen', function(done) {
+          expect(this.client.supported.nicklength).not.to.equal(24);
+          iSupportIndividual(this, 'NICKLEN=24', check);
+          function check(local) {
+            expect(local.client.supported.nicklength).to.equal(24);
+            done();
+          }
+        });
+
+        it('parses prefix', function(done) {
+          var expectedModeForPrefix = {
+            '@': 'o',
+            '+': 'v'
+          };
+          var expectedPrefixForMode = {
+            o: '@',
+            v: '+'
+          };
+          var expectedB = 'ov';
+          expect(this.client.modeForPrefix).not.to.deep.equal(expectedModeForPrefix);
+          expect(this.client.prefixForMode).not.to.deep.equal(expectedPrefixForMode);
+          expect(this.client.supported.channel.modes.b).not.to.equal(expectedB);
+          iSupportIndividual(this, 'PREFIX=(ov)@+', check);
+          function check(local) {
+            expect(local.client.modeForPrefix).to.deep.equal(expectedModeForPrefix);
+            expect(local.client.prefixForMode).to.deep.equal(expectedPrefixForMode);
+            expect(local.client.supported.channel.modes.b).to.equal(expectedB);
+            done();
+          }
+        });
+
+        it('parses targmax', function(done) {
+          var expectedTargets = {
+            NAMES: 1,
+            LIST: 1,
+            KICK: 1,
+            WHOIS: 1,
+            PRIVMSG: 4,
+            NOTICE: 4,
+            ACCEPT: 0,
+            MONITOR: 0
+          };
+          expect(this.client.supported.maxtargets).not.to.deep.equal(expectedTargets);
+          iSupportIndividual(this, 'TARGMAX=NAMES:1,LIST:1,KICK:1,WHOIS:1,PRIVMSG:4,NOTICE:4,ACCEPT:,MONITOR:', check);
+          function check(local) {
+            expect(local.client.supported.maxtargets).to.deep.equal(expectedTargets);
+            done();
+          }
+        });
+
+        it('parses topiclen', function(done) {
+          expect(this.client.supported.topiclength).not.to.equal(390);
+          iSupportIndividual(this, 'TOPICLEN=390', check);
+          function check(local) {
+            expect(local.client.supported.topiclength).to.equal(390);
+            done();
+          }
+        });
+
+        // sample data has not been found for the isupports below
+        // TODO: add real-life sample data for following tests
+
+        it('parses idchan', function(done) {
+          var expectedIdLength = {
+            '!': 5
+          };
+          expect(this.client.supported.channel.idlength).not.to.deep.equal(expectedIdLength);
+          iSupportIndividual(this, 'IDCHAN=!:5', check);
+          function check(local) {
+            expect(local.client.supported.channel.idlength).to.deep.equal(expectedIdLength);
+            done();
+          }
+        });
+
+        it('parses kicklen', function(done) {
+          expect(this.client.supported.kicklength).not.to.equal(160);
+          iSupportIndividual(this, 'KICKLEN=160', check);
+          function check(local) {
+            expect(local.client.supported.kicklength).to.equal(160);
+            done();
+          }
+        });
+      });
+
+      it('parses multiple isupport args at once', function (done) {
+        var self = this;
+        // make sure args are not equal to values before:
+        expect(self.client.supported.channel.limit['#']).not.to.equal(50);
+        expect(self.client.supported.topiclength).not.to.equal(390);
+        expect(self.client.supported.nicklength).not.to.equal(24);
+        expect(self.client.supported.channel.length).not.to.equal(50);
+
+        self.mock.send(':127.0.0.1 005 testbot CHANLIMIT=#:50 TOPICLEN=390 NICKLEN=24 CHANNELLEN=50 :are supported by this server\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '005') return;
+          expect(message.command).to.equal('rpl_isupport');
+          expect(message.args).to.deep.equal([
+            'testbot', 'CHANLIMIT=#:50', 'TOPICLEN=390', 'NICKLEN=24', 'CHANNELLEN=50', 'are supported by this server'
+          ]);
+          setTimeout(check, 10);
+        });
+
+        function check() {
+          expect(self.client.supported.channel.limit['#']).to.equal(50);
+          expect(self.client.supported.topiclength).to.equal(390);
+          expect(self.client.supported.nicklength).to.equal(24);
+          expect(self.client.supported.channel.length).to.equal(50);
+          done();
+        }
+      });
+    });
+
     describe('whois', function() {
       testHelpers.hookMockSetup(beforeEach, afterEach);
 
