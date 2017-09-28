@@ -182,6 +182,10 @@ function setupMocks(config, callback) {
   var client = new lib.Client(clientServer, clientNick, clientConfig);
   mockObj.client = client;
 
+  var unhandledSpy = sinon.spy();
+  client.on('unhandled', unhandledSpy);
+  mockObj.unhandledSpy = unhandledSpy;
+
   client.once('registered', function() {
     if (!metaConfig.callbackEarly) callback(mockObj);
   });
