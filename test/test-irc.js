@@ -563,7 +563,7 @@ describe('Client', function() {
           commandType: 'normal',
           args: ['test']
         };
-        expect(self.unhandledSpy.args).to.deep.equal(expected);
+        expect(self.unhandledSpy.args).to.deep.equal([[expected]]);
         done();
       }
     });
