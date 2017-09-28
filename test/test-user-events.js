@@ -422,6 +422,35 @@ describe('Client', function() {
           }, 10);
         }
       });
+
+      it('handles notice from user correctly', function(done) {
+        var self = this;
+
+        self.client.out.debug = sinon.spy();
+        self.client.on('notice', finish);
+        self.mock.send(':127.0.0.1 NOTICE testbot :test message 1\r\n');
+
+        function finish(from, to, text, message) {
+          var msg = {
+            prefix: '127.0.0.1',
+            server: '127.0.0.1',
+            command: 'NOTICE',
+            rawCommand: 'NOTICE',
+            commandType: 'normal',
+            args: ['testbot', 'test message 1']
+          };
+          expect(from).to.be.undefined;
+          expect(to).to.equal('testbot');
+          expect(text).to.equal('test message 1');
+          expect(message).to.deep.equal(msg);
+          setTimeout(function() {
+            expect(self.client.out.debug.args).to.deep.include(
+              ['GOT NOTICE from the server: "test message 1"']
+            );
+            done();
+          }, 10);
+        }
+      });
     });
 
     describe('PRIVMSG', function() {
