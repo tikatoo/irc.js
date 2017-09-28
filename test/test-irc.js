@@ -263,6 +263,33 @@ describe('Client', function() {
       });
     });
 
+    context('with myinfo', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      it('parses usermodes', function(done) {
+        var self = this;
+        var expectedModes = 'DQRSZagiloswz';
+        self.mock.send(':127.0.0.1 004 testbot 127.0.0.1 test-server-0.0.1 ' + expectedModes + ' CFILPQTbcefgijklmnopqrstvz bkloveqjfI\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '004') return;
+          expect(message.command).to.equal('rpl_myinfo');
+          expect(message.args).to.deep.equal([
+            'testbot',
+            '127.0.0.1',
+            'test-server-0.0.1',
+            expectedModes,
+            'CFILPQTbcefgijklmnopqrstvz',
+            'bkloveqjfI'
+          ]);
+          setTimeout(end, 10);
+        });
+        function end() {
+          expect(self.client.supported.usermodes).to.equal(expectedModes);
+          done();
+        }
+      });
+    });
+
     context('with isupport', function() {
       testHelpers.hookMockSetup(beforeEach, afterEach);
 
