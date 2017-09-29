@@ -668,5 +668,214 @@ describe('Client', function() {
         }
       });
     });
+
+    describe('CTCP', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      beforeEach(function() {
+        this.ctcpSpy = sinon.spy();
+        this.ctcpNoticeSpy = sinon.spy();
+        this.ctcpPrivmsgSpy = sinon.spy();
+        this.ctcpVersionSpy = sinon.spy();
+        this.actionSpy = sinon.spy();
+        this.client.on('ctcp', this.ctcpSpy);
+        this.client.on('ctcp-notice', this.ctcpNoticeSpy);
+        this.client.on('ctcp-privmsg', this.ctcpPrivmsgSpy);
+        this.client.on('ctcp-version', this.ctcpVersionSpy);
+        this.client.on('action', this.actionSpy);
+        this.sendStub = sinon.stub(this.client, 'send');
+        this.sendStub.callThrough();
+      });
+
+      var from = 'testbot2!~testbot2@EXAMPLE.HOST';
+      var to = 'testbot';
+
+      it('does not trigger on PRIVMSG with single u0001', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' PRIVMSG ' + to + ' \u0001\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'PRIVMSG') return;
+          setTimeout(function() {
+            expect(self.ctcpSpy.callCount).to.equal(0);
+            done();
+          }, 10);
+        });
+      });
+
+      it('does not trigger on NOTICE with single u0001', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' NOTICE ' + to + ' \u0001\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'NOTICE') return;
+          setTimeout(function() {
+            expect(self.ctcpSpy.callCount).to.equal(0);
+            done();
+          }, 10);
+        });
+      });
+
+      it('triggers on simple CTCP PRIVMSG', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' PRIVMSG ' + to + ' \u0001TIME\u0001\r\n');
+        var msg = {
+          prefix: from,
+          nick: 'testbot2',
+          host: 'EXAMPLE.HOST',
+          user: '~testbot2',
+          command: 'PRIVMSG',
+          rawCommand: 'PRIVMSG',
+          commandType: 'normal',
+          args: [to, '\u0001TIME\u0001']
+        };
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'PRIVMSG') return;
+          setTimeout(end, 10);
+        });
+        function end() {
+          expect(self.ctcpSpy.args).to.deep.equal([
+            ['testbot2', to, 'TIME', 'privmsg', msg]
+          ]);
+          expect(self.ctcpPrivmsgSpy.args).to.deep.equal([
+            ['testbot2', to, 'TIME', msg]
+          ]);
+          expect(self.ctcpNoticeSpy.callCount).to.equal(0);
+          expect(self.ctcpVersionSpy.callCount).to.equal(0);
+          expect(self.actionSpy.callCount).to.equal(0);
+          done();
+        }
+      });
+
+      it('triggers on simple CTCP NOTICE', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' NOTICE ' + to + ' \u0001TIME\u0001\r\n');
+        var msg = {
+          prefix: from,
+          nick: 'testbot2',
+          host: 'EXAMPLE.HOST',
+          user: '~testbot2',
+          command: 'NOTICE',
+          rawCommand: 'NOTICE',
+          commandType: 'normal',
+          args: [to, '\u0001TIME\u0001']
+        };
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'NOTICE') return;
+          setTimeout(end, 10);
+        });
+        function end() {
+          expect(self.ctcpSpy.args).to.deep.equal([
+            ['testbot2', to, 'TIME', 'notice', msg]
+          ]);
+          expect(self.ctcpPrivmsgSpy.callCount).to.equal(0);
+          expect(self.ctcpNoticeSpy.args).to.deep.equal([
+            ['testbot2', to, 'TIME', msg]
+          ]);
+          expect(self.ctcpVersionSpy.callCount).to.equal(0);
+          expect(self.actionSpy.callCount).to.equal(0);
+          done();
+        }
+      });
+
+      it('triggers on CTCP version request', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' PRIVMSG ' + to + ' \u0001VERSION\u0001\r\n');
+        var msg = {
+          prefix: from,
+          nick: 'testbot2',
+          host: 'EXAMPLE.HOST',
+          user: '~testbot2',
+          command: 'PRIVMSG',
+          rawCommand: 'PRIVMSG',
+          commandType: 'normal',
+          args: [to, '\u0001VERSION\u0001']
+        };
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'PRIVMSG') return;
+          setTimeout(end, 10);
+        });
+        function end() {
+          expect(self.ctcpSpy.args).to.deep.equal([
+            ['testbot2', to, 'VERSION', 'privmsg', msg]
+          ]);
+          expect(self.ctcpPrivmsgSpy.args).to.deep.equal([
+            ['testbot2', to, 'VERSION', msg]
+          ]);
+          expect(self.ctcpNoticeSpy.callCount).to.equal(0);
+          expect(self.ctcpVersionSpy.args).to.deep.equal([
+            ['testbot2', to, msg]
+          ]);
+          expect(self.actionSpy.callCount).to.equal(0);
+          done();
+        }
+      });
+
+      it('does not trigger ctcp-version on CTCP version response', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' NOTICE ' + to + ' :\u0001VERSION ExampleClient 0.0.1 / OS 0.0.1 [x86_64]\u0001\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'NOTICE') return;
+          setTimeout(end, 10);
+        });
+        function end() {
+          expect(self.ctcpSpy.callCount).to.equal(1);
+          expect(self.ctcpPrivmsgSpy.callCount).to.equal(0);
+          expect(self.ctcpNoticeSpy.callCount).to.equal(1);
+          expect(self.ctcpVersionSpy.callCount).to.equal(0);
+          expect(self.actionSpy.callCount).to.equal(0);
+          done();
+        }
+      });
+
+      it('triggers action on CTCP action', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' PRIVMSG #channel :\u0001ACTION tests something\u0001\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'PRIVMSG') return;
+          setTimeout(end, 10);
+        });
+        var msg = {
+          prefix: from,
+          nick: 'testbot2',
+          host: 'EXAMPLE.HOST',
+          user: '~testbot2',
+          command: 'PRIVMSG',
+          rawCommand: 'PRIVMSG',
+          commandType: 'normal',
+          args: ['#channel', '\u0001ACTION tests something\u0001']
+        };
+        function end() {
+          expect(self.ctcpSpy.callCount).to.equal(1);
+          expect(self.ctcpPrivmsgSpy.callCount).to.equal(1);
+          expect(self.ctcpNoticeSpy.callCount).to.equal(0);
+          expect(self.ctcpVersionSpy.callCount).to.equal(0);
+          expect(self.actionSpy.args).to.deep.equal([
+            ['testbot2', '#channel', 'tests something', msg]
+          ]);
+          done();
+        }
+      });
+
+      it('pings on CTCP ping', function(done) {
+        var self = this;
+        self.mock.send(':' + from + ' PRIVMSG ' + to + ' :\u0001PING 1500000000000\u0001\r\n');
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== 'PRIVMSG') return;
+          setTimeout(end, 10);
+        });
+        function end() {
+          expect(self.ctcpSpy.callCount).to.equal(1);
+          expect(self.ctcpPrivmsgSpy.callCount).to.equal(1);
+          expect(self.ctcpNoticeSpy.callCount).to.equal(0);
+          expect(self.ctcpVersionSpy.callCount).to.equal(0);
+          expect(self.actionSpy.callCount).to.equal(0);
+          expect(self.sendStub.args).to.deep.include(
+            ['NOTICE', 'testbot2', '\u0001PING 1500000000000\u0001']
+          );
+          done();
+        }
+      });
+
+      // this.ctcpStub.callThrough();
+    });
   });
 });
