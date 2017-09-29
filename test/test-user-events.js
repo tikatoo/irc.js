@@ -877,5 +877,35 @@ describe('Client', function() {
 
       // this.ctcpStub.callThrough();
     });
+
+    describe('WHO', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      it('emits response on rpl_whoreply', function(done) {
+        var self = this;
+        var whoisSpy = sinon.spy();
+        self.client.on('whois', whoisSpy);
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '352') return;
+          expect(message.command).to.equal('rpl_whoreply');
+          setTimeout(end, 10);
+        });
+
+        self.mock.send(':127.0.0.1 352 testbot #test ~testbot EXAMPLE.HOST 127.0.0.1 testbot2 H :1 nodeJS IRC Client\r\n');
+
+        function end() {
+          expect(whoisSpy.args).to.deep.equal([
+            [{
+              nick: 'testbot2',
+              user: '~testbot',
+              host: 'EXAMPLE.HOST',
+              server: '127.0.0.1',
+              realname: 'nodeJS IRC Client'
+            }]
+          ]);
+          done();
+        }
+      });
+    });
   });
 });
