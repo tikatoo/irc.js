@@ -526,8 +526,13 @@ describe('Client', function() {
   });
 
   // for notice, say, as they work the same
-  function sharedExamplesForSpeaks(commandName, expectedCommand) {
+  function sharedExamplesForSpeaks(commandName, expectedCommand, isAction) {
     // see also test-irc.js #_speak
+
+    function wrapMessage(message) {
+      if (!isAction) return message;
+      return '\u0001ACTION ' + message + '\u0001';
+    }
 
     beforeEach(function() {
       this.sendStub = sinon.stub(this.client, 'send');
@@ -541,16 +546,23 @@ describe('Client', function() {
     it('works with basic text', function() {
       this.client[commandName]('#channel', 'test message');
       expect(this.sendStub.args).to.deep.equal([
-        [expectedCommand, '#channel', 'test message']
+        [expectedCommand, '#channel', wrapMessage('test message')]
+      ]);
+    });
+
+    it('works with basic text and user', function() {
+      this.client[commandName]('testbot2', 'test message');
+      expect(this.sendStub.args).to.deep.equal([
+        [expectedCommand, 'testbot2', wrapMessage('test message')]
       ]);
     });
 
     it('splits on manual linebreak and skips empty lines', function() {
       this.client[commandName]('#channel', 'test\r\nmessage\r\n\r\nanother');
       expect(this.sendStub.args).to.deep.equal([
-        [expectedCommand, '#channel', 'test'],
-        [expectedCommand, '#channel', 'message'],
-        [expectedCommand, '#channel', 'another']
+        [expectedCommand, '#channel', wrapMessage('test')],
+        [expectedCommand, '#channel', wrapMessage('message')],
+        [expectedCommand, '#channel', wrapMessage('another')]
       ]);
     });
 
@@ -562,9 +574,9 @@ describe('Client', function() {
       this.client._splitLongLines = splitStub;
       this.client[commandName]('#channel', 'test message lines');
       expect(this.sendStub.args).to.deep.equal([
-        [expectedCommand, '#channel', 'test'],
-        [expectedCommand, '#channel', 'message'],
-        [expectedCommand, '#channel', 'lines']
+        [expectedCommand, '#channel', wrapMessage('test')],
+        [expectedCommand, '#channel', wrapMessage('message')],
+        [expectedCommand, '#channel', wrapMessage('lines')]
       ]);
     });
   }
@@ -572,10 +584,57 @@ describe('Client', function() {
   describe('#notice', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);
     sharedExamplesForSpeaks('notice', 'NOTICE');
+
+    it('does not emit selfMessage on send', function() {
+      var selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', selfMsgSpy);
+      this.client.notice('target', 'test message');
+      expect(selfMsgSpy.callCount).to.equal(0);
+    });
   });
 
   describe('#say', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);
     sharedExamplesForSpeaks('say', 'PRIVMSG');
+
+    it('emits selfMessage on send', function() {
+      var selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', selfMsgSpy);
+      this.client.say('target', 'test message');
+      expect(selfMsgSpy.args).to.deep.equal([
+        ['target', 'test message']
+      ]);
+    });
+  });
+
+  describe('#action', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {client: {messageSplit: 19}, meta: {withoutServer: true}});
+    sharedExamplesForSpeaks('action', 'PRIVMSG', true);
+
+    it('calculates maxLength correctly', function() {
+      var client = this.client;
+      var tests = [
+        {maxLineLength: 39, expected: 10},
+        {maxLineLength: 16, expected: 1}
+      ];
+      tests.forEach(function(item) {
+        var splitStub = sinon.stub().callsFake(function(words) { return [words]; });
+        client._splitLongLines = splitStub;
+        client.maxLineLength = item.maxLineLength;
+        client.action('target', 'test message'); // sample data
+        expect(splitStub.args).to.deep.equal([
+          ['test message', item.expected, []]
+        ]);
+      });
+    });
+
+    it('emits selfMessage on action send', function() {
+      var selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', selfMsgSpy);
+      this.client.action('target', 'test message');
+      expect(selfMsgSpy.args).to.deep.equal([
+        ['target', '\u0001ACTION test message\u0001']
+      ]);
+    });
   });
 });
