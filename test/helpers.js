@@ -135,10 +135,11 @@ function setupMocks(config, callback) {
 
   var metaConfig = Object.assign(defaultMeta, config.meta);
   if (metaConfig.withoutServer) defaultClient.autoConnect = false;
-  if (!defaultClient.autoConnect) metaConfig.callbackEarly = true;
 
   var clientConfig = Object.assign(defaultClient, config.client);
   var serverConfig = Object.assign(defaultServer, config.server);
+
+  if (clientConfig.autoConnect === false) metaConfig.callbackEarly = true;
 
   var quiet = metaConfig.disableOutput;
   var stubTimer = metaConfig.stubTimer;

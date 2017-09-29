@@ -147,14 +147,12 @@ describe('Client', function() {
         self.client.send('TEST', 'example data');
       }
       expect(wrap).not.to.throw();
-      setTimeout(function() {
-        expect(self.debugSpy.args).to.deep.include([
-          '(Disconnected) SEND:', 'TEST :example data'
-        ]);
-        expect(self.connSpy.args).to.deep.equal([
-          ['QUIT :node-irc says goodbye\r\n']
-        ]);
-      }, 10);
+      expect(self.debugSpy.args).to.deep.include([
+        '(Disconnected) SEND:', 'TEST :example data'
+      ]);
+      expect(self.connSpy.args).to.deep.equal([
+        ['QUIT :node-irc says goodbye\r\n']
+      ]);
     });
   });
 
