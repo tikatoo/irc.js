@@ -20,7 +20,7 @@ var c = new irc.Client(
 var messages = [];
 c.addListener('raw', function(message) { messages.push(message); });
 c.addListener('unhandled', function(message) {
-  console.log(color('error: ', 'red'), message);
+  console.log(color('unhandled: ', 'red'), message);
 });
 c.addListener('error', function(message) { console.log(color('error: ', 'red'), message); });
 
