@@ -72,7 +72,7 @@ describe('Client', function() {
       self.client.connect(0, function() { done(); });
     });
 
-    // TODO: test first parameter is respected
+    // see test-reconnect.js for testing of retryCount parameter
   });
 
   describe('#send', function() {

@@ -907,5 +907,247 @@ describe('Client', function() {
         }
       });
     });
+
+    describe('LIST', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      it('parses channel list response and emits properly', function(done) {
+        var self = this;
+        var listStartSpy = sinon.spy();
+        var listItemSpy = sinon.spy();
+        var listSpy = sinon.spy();
+        self.client.on('channellist_start', listStartSpy);
+        self.client.on('channellist_item', listItemSpy);
+        self.client.on('channellist', listSpy);
+
+        var channels = [
+          {name: '#test', users: '3', topic: '[+nt] test channel'},
+          {name: '#channel', users: '7', topic: ' '}
+        ];
+
+        expect(self.client.channellist).not.to.be.ok;
+        expect(listStartSpy.callCount).to.equal(0);
+
+        self.client.list('>2,<10000');
+
+        self.mock.on('line', function(line) {
+          if (line !== 'LIST >2,<10000') return;
+          // FIXME: this looks wrong – should the sentinel be before Name?
+          self.mock.send(':127.0.0.1 321 testbot Channel :Users  Name\r\n');
+          channels.forEach(function(channel) {
+            self.mock.send(':127.0.0.1 322 testbot ' + channel.name + ' ' + channel.users + ' :' + channel.topic + '\r\n');
+          });
+          self.mock.send(':127.0.0.1 323 testbot :End of /LIST\r\n');
+        });
+
+        self.client.on('raw', function(message) {
+          if (message.rawCommand === '321') {
+            expect(message.command).to.equal('rpl_liststart');
+            expect(self.client.channellist).to.be.empty;
+            expect(listStartSpy.callCount).to.equal(1);
+          } else if (message.rawCommand === '322') {
+            expect(message.command).to.equal('rpl_list');
+            var currentChans = channels.slice(0, listItemSpy.callCount);
+            expect(listItemSpy.args).to.deep.equal(currentChans.map(function(x) { return [x]; }));
+            expect(self.client.channellist).to.deep.equal(currentChans);
+          } else if (message.rawCommand === '323') {
+            expect(message.command).to.equal('rpl_listend');
+            expect(listStartSpy.callCount).to.equal(1);
+            expect(listItemSpy.args).to.deep.equal(channels.map(function(x) { return [x]; }));
+            expect(listSpy.callCount).to.equal(1);
+            expect(listSpy.args[0]).to.deep.equal([channels]);
+            done();
+          }
+        });
+      });
+    });
+
+    function sharedQuitExamplesFor(command, eventName, msg, messageWrapper) {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      var channelNames = testHelpers.emitNames;
+
+      beforeEach(function() {
+        this.eventSpy = sinon.spy();
+        this.client.on(eventName, this.eventSpy);
+      });
+
+      it('emits event', function(done) {
+        var self = this;
+        testHelpers.joinChannels(self, ['#test'], ['#test'], function() {
+          channelNames(self, '#test', 'testbot user1');
+          self.mock.send(messageWrapper(command, 'user1!~user1@EXAMPLE2.HOST', 'user1', msg));
+          self.client.on('raw', function(message) {
+            if (message.rawCommand !== command) return;
+            expect(message.command).to.equal(command);
+            expect(self.eventSpy.args).to.deep.equal([
+              ['user1', msg, ['#test'], message]
+            ]);
+            done();
+          });
+        });
+      });
+
+      it('works with mixed-case', function(done) {
+        var self = this;
+        testHelpers.joinChannels(self, ['#Test', '#test2', '#Test3'], ['#test', '#Test2', '#Test3'], function() {
+          channelNames(self, '#test', 'testbot user1');
+          channelNames(self, '#Test2', 'testbot user2');
+          channelNames(self, '#Test3', 'testbot user3');
+
+          // chanData is saved with lowercase channel name
+          // hence events are sent lowercase, not using remote case
+          var expected = [
+            ['user1', msg, ['#test']],
+            ['user2', msg, ['#test2']],
+            ['user3', msg, ['#test3']]
+          ];
+
+          var count = 0;
+          self.mock.send(messageWrapper(command, 'user1!~user1@EXAMPLE2.HOST', 'user1', msg));
+          self.mock.send(messageWrapper(command, 'user2!~user1@EXAMPLE2.HOST', 'user2', msg));
+          self.mock.send(messageWrapper(command, 'user3!~user1@EXAMPLE2.HOST', 'user3', msg));
+          self.client.on('raw', processRaw);
+
+          function processRaw(message) {
+            if (message.rawCommand !== command) return;
+            count++;
+            expect(message.command).to.equal(command);
+            expect(self.eventSpy.callCount).to.equal(count);
+            expected[count-1].push(message);
+            expect(self.eventSpy.args[count-1]).to.deep.equal(expected[count-1]);
+            if (count === expected.length) end();
+          }
+
+          function end() {
+            expect(self.eventSpy.args).to.deep.equal(expected);
+            done();
+          }
+        });
+      });
+
+      it('sends only for channels that target user shared with client', function(done) {
+        var self = this;
+        testHelpers.joinChannels(self, ['#test', '#test2'], ['#test', '#test2'], function() {
+          channelNames(self, '#test', 'testbot user1');
+          channelNames(self, '#test2', 'testbot');
+          self.mock.send(messageWrapper(command, 'user1!~user1@EXAMPLE2.HOST', 'user1', msg));
+          self.client.on('raw', function(message) {
+            if (message.rawCommand !== command) return;
+            expect(message.command).to.equal(command);
+            expect(self.eventSpy.args).to.deep.equal([
+              ['user1', msg, ['#test'], message]
+            ]);
+            done();
+          });
+        });
+      });
+    }
+
+    describe('KILL', function() {
+      function messageWrapper(command, _leaverIdent, leaverNick, msg) {
+        return ':op!~op@OP.HOST ' + command + ' ' + leaverNick + ' :' + msg + '\r\n';
+      }
+      sharedQuitExamplesFor('KILL', 'kill', 'TEST KILL', messageWrapper);
+    });
+
+    describe('QUIT', function() {
+      function messageWrapper(command, leaverIdent, _leaverNick, msg) {
+        return ':' + leaverIdent + ' ' + command + ' :' + msg + '\r\n';
+      }
+      sharedQuitExamplesFor('QUIT', 'quit', 'Quit: Leaving', messageWrapper);
+
+      it('emits debug when someone quits', function(done) {
+        var self = this;
+        this.debugStub = sinon.stub(this.client.out, 'debug');
+        this.debugStub.callThrough();
+
+        testHelpers.joinChannels(self, ['#test', '#test2'], ['#test', '#test2'], function() {
+          testHelpers.emitNames(self, '#test', 'testbot user1');
+          testHelpers.emitNames(self, '#test2', 'testbot');
+          self.mock.send(':user1!~user1@EXAMPLE2.HOST QUIT :QUIT: Leaving\r\n');
+          self.client.on('raw', function(message) {
+            if (message.rawCommand !== 'QUIT') return;
+            expect(self.eventSpy.args).to.deep.equal([
+              ['user1', 'QUIT: Leaving', ['#test'], message]
+            ]);
+            expect(self.debugStub.args).to.deep.include([
+              'QUIT: user1!~user1@EXAMPLE2.HOST QUIT: Leaving'
+            ]);
+            done();
+          });
+        });
+      });
+    });
+
+    describe('MODE', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      beforeEach(function() {
+        this.errorOutStub = sinon.stub(this.client.out, 'error');
+        this.errorOutStub.callThrough();
+        this.errorSpy = sinon.spy();
+        this.client.on('error', this.errorSpy);
+      });
+
+      it('errors on invalid umode', function(done) {
+        var self = this;
+        self.client.send('MODE', 'testbot', '+Z');
+        self.mock.on('line', function(line) {
+          if (line !== 'MODE testbot +Z') return;
+          self.mock.send(':127.0.0.1 501 testbot :Unknown MODE flag\r\n');
+        });
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '501') return;
+          self.client.removeListener('error', self.errorSpy);
+          expect(message).to.deep.equal({
+            prefix: '127.0.0.1',
+            server: '127.0.0.1',
+            rawCommand: '501',
+            commandType: 'error',
+            command: 'err_umodeunknownflag',
+            args: ['testbot', 'Unknown MODE flag']
+          });
+          expect(self.errorOutStub.args).to.deep.equal([[message]]);
+          expect(self.errorSpy.args).to.deep.equal([[message]]);
+          done();
+        });
+      });
+    });
+
+    describe('NICK', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      beforeEach(function() {
+        this.errorOutStub = sinon.stub(this.client.out, 'error');
+        this.errorOutStub.callThrough();
+        this.errorSpy = sinon.spy();
+        this.client.on('error', this.errorSpy);
+      });
+
+      it('errors on invalid nickname', function(done) {
+        var self = this;
+        self.client.send('NICK', 'ERR@NEOUS');
+        self.mock.on('line', function(line) {
+          if (line !== 'NICK ERR@NEOUS') return;
+          self.mock.send(':127.0.0.1 432 testbot ERR@NEOUS :Erroneous Nickname: Illegal characters\r\n');
+        });
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '432') return;
+          self.client.removeListener('error', self.errorSpy);
+          expect(message).to.deep.equal({
+            prefix: '127.0.0.1',
+            server: '127.0.0.1',
+            rawCommand: '432',
+            commandType: 'error',
+            command: 'err_erroneusnickname',
+            args: ['testbot', 'ERR@NEOUS', 'Erroneous Nickname: Illegal characters']
+          });
+          expect(self.errorOutStub.args).to.deep.equal([[message]]);
+          expect(self.errorSpy.args).to.deep.equal([[message]]);
+          done();
+        });
+      });
+    });
   });
 });

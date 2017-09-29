@@ -295,6 +295,38 @@ describe('Client', function() {
           done();
         }
       });
+
+      context('with foreign timer', function() {
+        beforeEach(function(done) {
+          this.foreignConn = this.client.conn;
+          this.client.conn = null;
+          this.client.connect(function() {
+            done();
+          });
+        });
+
+        afterEach(function() {
+          this.foreignConn.destroy();
+        });
+
+        it('ignores wantPing', function(done) {
+          var self = this, conn = this.foreignConn;
+          conn.cyclingPingTimer.emit('wantPing');
+          setTimeout(function() {
+            expect(self.pingSpy.callCount).to.equal(0);
+            done();
+          }, 50);
+        });
+
+        it('ignores pingTimeout', function(done) {
+          var self = this, conn = this.foreignConn;
+          conn.cyclingPingTimer.emit('pingTimeout');
+          setTimeout(function() {
+            expect(self.client.conn).to.be.ok;
+            done();
+          }, 50);
+        });
+      });
     });
 
     context('with server', function() {
