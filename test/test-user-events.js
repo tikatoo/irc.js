@@ -1027,7 +1027,6 @@ describe('Client', function() {
       });
 
       it('sends only for channels that target user shared with client', function(done) {
-        // TODO
         var self = this;
         testHelpers.joinChannels(self, ['#test', '#test2'], ['#test', '#test2'], function() {
           channelNames(self, '#test', 'testbot user1');

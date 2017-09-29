@@ -924,6 +924,4 @@ describe('Client', function() {
     }
     expect(wrap).not.to.throw();
   });
-
-  it('handles channel-list-related events');
 });
