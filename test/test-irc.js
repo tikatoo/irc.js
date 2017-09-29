@@ -703,6 +703,38 @@ describe('Client', function() {
         }
       });
     });
+
+    describe('with password', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {password: 'test'}, meta: {callbackEarly: true, autoGreet: false}});
+
+      it('sends password', function(done) {
+        var self = this;
+        self.client.on('connect', function() {
+          setTimeout(function() {
+            expect(self.lineSpy.args).to.deep.include([
+              'PASS test'
+            ]);
+            done();
+          }, 10);
+        });
+      });
+    });
+
+    describe('with WEBIRC', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {webirc: {pass: 'test', userName: 'name', host: 'example.host', ip: '192.168.0.1'}}, meta: {callbackEarly: true, autoGreet: false}});
+
+      it('sends details', function(done) {
+        var self = this;
+        self.client.on('connect', function() {
+          setTimeout(function() {
+            expect(self.lineSpy.args).to.deep.include([
+              'WEBIRC test nodebot example.host 192.168.0.1'
+            ]);
+            done();
+          }, 10);
+        });
+      });
+    });
   });
 
   describe('_splitLongLines', function() {
@@ -894,7 +926,4 @@ describe('Client', function() {
   });
 
   it('handles channel-list-related events');
-
-  it('.action actions');
-  it('handles CTCP');
 });

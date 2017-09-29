@@ -33,6 +33,46 @@ describe('Client', function() {
       expect(wrap).not.to.throw();
       expect(errorSpy.args).to.deep.equal([[error]]);
     });
+
+    it('does not emit error if disconnect requested', function() {
+      var self = this;
+      var errorSpy = sinon.spy();
+      var error = new Error('test error');
+      function wrap() {
+        self.client.conn.emit('data', ':127.0.0.1 PING :1\r\n');
+      }
+      self.client.on('raw', function() {
+        self.client.disconnect();
+        throw error;
+      });
+      self.client.on('error', errorSpy);
+      expect(wrap).not.to.throw();
+      expect(errorSpy.callCount).to.equal(0);
+    });
+  });
+
+  describe('#connect', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {client: {autoConnect: false}});
+
+    it('establishes socket without arguments', function(done) {
+      var self = this;
+      self.client.connect();
+      self.client.on('registered', function() {
+        done();
+      });
+    });
+
+    it('accepts callback in first position', function(done) {
+      var self = this;
+      self.client.connect(function() { done(); });
+    });
+
+    it('accepts callback in second position', function(done) {
+      var self = this;
+      self.client.connect(0, function() { done(); });
+    });
+
+    // TODO: test first parameter is respected
   });
 
   describe('#send', function() {
@@ -634,6 +674,33 @@ describe('Client', function() {
       this.client.action('target', 'test message');
       expect(selfMsgSpy.args).to.deep.equal([
         ['target', '\u0001ACTION test message\u0001']
+      ]);
+    });
+  });
+
+  describe('#ctcp', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {meta: {withoutServer: true}});
+
+    beforeEach(function() {
+      this.saySpy = sinon.spy();
+      this.noticeSpy = sinon.spy();
+      this.client.say = this.saySpy;
+      this.client.notice = this.noticeSpy;
+    });
+
+    it('passes through properly', function() {
+      this.client.ctcp('user', null, 'ACTION message');
+      expect(this.noticeSpy.args).to.deep.equal([
+        ['user', '\u0001ACTION message\u0001']
+      ]);
+      expect(this.saySpy.callCount).to.equal(0);
+    });
+
+    it('uses privmsg instead if told to', function() {
+      this.client.ctcp('user', 'privmsg', 'ACTION message');
+      expect(this.noticeSpy.callCount).to.equal(0);
+      expect(this.saySpy.args).to.deep.equal([
+        ['user', '\u0001ACTION message\u0001']
       ]);
     });
   });
