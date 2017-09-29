@@ -584,11 +584,27 @@ describe('Client', function() {
   describe('#notice', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);
     sharedExamplesForSpeaks('notice', 'NOTICE');
+
+    it('does not emit selfMessage on send', function() {
+      var selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', selfMsgSpy);
+      this.client.notice('target', 'test message');
+      expect(selfMsgSpy.callCount).to.equal(0);
+    });
   });
 
   describe('#say', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);
     sharedExamplesForSpeaks('say', 'PRIVMSG');
+
+    it('emits selfMessage on send', function() {
+      var selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', selfMsgSpy);
+      this.client.say('target', 'test message');
+      expect(selfMsgSpy.args).to.deep.equal([
+        ['target', 'test message']
+      ]);
+    });
   });
 
   describe('#action', function() {
@@ -610,6 +626,15 @@ describe('Client', function() {
           ['test message', item.expected, []]
         ]);
       });
+    });
+
+    it('emits selfMessage on action send', function() {
+      var selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', selfMsgSpy);
+      this.client.action('target', 'test message');
+      expect(selfMsgSpy.args).to.deep.equal([
+        ['target', '\u0001ACTION test message\u0001']
+      ]);
     });
   });
 });
