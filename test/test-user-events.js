@@ -907,5 +907,59 @@ describe('Client', function() {
         }
       });
     });
+
+    describe('LIST', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      it('parses channel list response and emits properly', function(done) {
+        var self = this;
+        var listStartSpy = sinon.spy();
+        var listItemSpy = sinon.spy();
+        var listSpy = sinon.spy();
+        self.client.on('channellist_start', listStartSpy);
+        self.client.on('channellist_item', listItemSpy);
+        self.client.on('channellist', listSpy);
+
+        var channels = [
+          {name: '#test', users: '3', topic: '[+nt] test channel'},
+          {name: '#channel', users: '7', topic: ' '}
+        ];
+
+        expect(self.client.channellist).not.to.be.ok;
+        expect(listStartSpy.callCount).to.equal(0);
+
+        self.client.list('>2,<10000');
+
+        self.mock.on('line', function(line) {
+          if (line !== 'LIST >2,<10000') return;
+          // FIXME: this looks wrong – should the sentinel be before Name?
+          self.mock.send(':127.0.0.1 321 testbot Channel :Users  Name\r\n');
+          channels.forEach(function(channel) {
+            self.mock.send(':127.0.0.1 322 testbot ' + channel.name + ' ' + channel.users + ' :' + channel.topic + '\r\n');
+          });
+          self.mock.send(':127.0.0.1 323 testbot :End of /LIST\r\n');
+        });
+
+        self.client.on('raw', function(message) {
+          if (message.rawCommand === '321') {
+            expect(message.command).to.equal('rpl_liststart');
+            expect(self.client.channellist).to.be.empty;
+            expect(listStartSpy.callCount).to.equal(1);
+          } else if (message.rawCommand === '322') {
+            expect(message.command).to.equal('rpl_list');
+            var currentChans = channels.slice(0, listItemSpy.callCount);
+            expect(listItemSpy.args).to.deep.equal(currentChans.map(function(x) { return [x]; }));
+            expect(self.client.channellist).to.deep.equal(currentChans);
+          } else if (message.rawCommand === '323') {
+            expect(message.command).to.equal('rpl_listend');
+            expect(listStartSpy.callCount).to.equal(1);
+            expect(listItemSpy.args).to.deep.equal(channels.map(function(x) { return [x]; }));
+            expect(listSpy.callCount).to.equal(1);
+            expect(listSpy.args[0]).to.deep.equal([channels]);
+            done();
+          }
+        });
+      });
+    });
   });
 });
