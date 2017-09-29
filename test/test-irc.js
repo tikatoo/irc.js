@@ -703,6 +703,21 @@ describe('Client', function() {
         }
       });
     });
+
+    describe('with password', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {password: 'test'}, meta: {callbackEarly: true, autoGreet: false}});
+
+      it('sends password', function() {
+        var self = this;
+        self.client.on('connect', function() {
+          setTimeout(function() {
+            expect(self.lineSpy.args).to.deep.include([
+              'PASS test'
+            ]);
+          }, 10);
+        });
+      });
+    });
   });
 
   describe('_splitLongLines', function() {
