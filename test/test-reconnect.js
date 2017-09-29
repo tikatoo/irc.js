@@ -19,6 +19,8 @@ describe('Client', function() {
             var registeredSpy = sinon.spy();
             client.on('registered', registeredSpy);
             var debugStub = sinon.stub(client.out, 'debug');
+            var abortSpy = sinon.spy();
+            client.on('abort', abortSpy);
 
             var conns = [];
             mock.server.on('connection', function(c) {
@@ -40,6 +42,7 @@ describe('Client', function() {
               expect(conns.length).to.equal(2);
               expect(conns[0].destroyed).to.be.true;
               expect(debugStub.args).to.deep.include(['Waiting 50ms before retrying']);
+              expect(abortSpy.callCount).to.equal(0);
               done();
             }
           });
@@ -53,6 +56,8 @@ describe('Client', function() {
             var registerSpy = sinon.spy();
             client.on('registered', registerSpy);
             var debugStub = sinon.stub(client.out, 'debug');
+            var abortSpy = sinon.spy();
+            client.on('abort', abortSpy);
 
             var conns = [];
             mock.server.on('connection', function(c) {
@@ -74,6 +79,7 @@ describe('Client', function() {
               expect(conns.length).to.equal(2);
               expect(conns[0].destroyed).to.be.true;
               expect(debugStub.args).to.deep.include(['Waiting 50ms before retrying']);
+              expect(abortSpy.callCount).to.equal(0);
               done();
             }
           });
@@ -83,6 +89,8 @@ describe('Client', function() {
             var registerSpy = sinon.spy();
             client.on('registered', registerSpy);
             var debugStub = sinon.stub(client.out, 'debug');
+            var abortSpy = sinon.spy();
+            client.on('abort', abortSpy);
 
             var conns = [];
             mock.server.on('connection', function(c) {
@@ -107,6 +115,9 @@ describe('Client', function() {
               expect(conns.length).to.equal(2);
               expect(conns[0].destroyed).to.be.true;
               expect(debugStub.args).to.deep.include(['Maximum retry count (1) reached. Aborting']);
+              expect(abortSpy.args).to.deep.equal([
+                [1]
+              ]);
               done();
             }
           });
@@ -117,6 +128,8 @@ describe('Client', function() {
             var registerSpy = sinon.spy();
             client.on('registered', registerSpy);
             var debugStub = sinon.stub(client.out, 'debug');
+            var abortSpy = sinon.spy();
+            client.on('abort', abortSpy);
 
             var conns = [];
             mock.server.on('connection', function(c) {
@@ -138,6 +151,9 @@ describe('Client', function() {
               expect(conns.length).to.equal(1);
               expect(conns[0].destroyed).to.be.true;
               expect(debugStub.args).to.deep.include(['Maximum retry count (1) reached. Aborting']);
+              expect(abortSpy.args).to.deep.equal([
+                [1]
+              ]);
               done();
             }
           });
