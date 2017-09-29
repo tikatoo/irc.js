@@ -718,6 +718,21 @@ describe('Client', function() {
         });
       });
     });
+
+    describe('with WEBIRC', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {webirc: {pass: 'test', userName: 'name', host: 'example.host', ip: '192.168.0.1'}}, meta: {callbackEarly: true, autoGreet: false}});
+
+      it('sends details', function() {
+        var self = this;
+        self.client.on('connect', function() {
+          setTimeout(function() {
+            expect(self.lineSpy.args).to.deep.include([
+              'WEBIRC test name example.host 192.168.0.1'
+            ]);
+          }, 10);
+        });
+      });
+    });
   });
 
   describe('_splitLongLines', function() {
