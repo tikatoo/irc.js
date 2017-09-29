@@ -587,8 +587,12 @@ describe('Client', function() {
           } else if (line === 'AUTHENTICATE ' + authMessage) {
             local.mock.send(':127.0.0.1 900 testbot testbot!testbot@EXAMPLE.HOST testbot :You are now logged in as testbot\r\n');
             local.mock.send(':127.0.0.1 903 testbot :SASL authentication successful\r\n');
+            local.mock.send(':127.0.0.1 378 testbot testbot :is connecting from EXAMPLE.HOST\r\n');
             local.client.on('raw', function(message) {
-              if (message.rawCommand === '903') setTimeout(end, 10);
+              if (message.rawCommand === '378') {
+                expect(message.command).to.equal('rpl_whoishost');
+                setTimeout(end, 10);
+              }
             });
           }
         });
