@@ -287,3 +287,8 @@ module.exports.joinChannelsBefore = function (beforeEach, localChannels, remoteC
     joinChannels(this, localChannels, remoteChannels, done);
   });
 };
+
+module.exports.emitNames = function (local, channelName, names) {
+  local.mock.send(':localhost 353 testbot = ' + channelName + ' :' + names + '\r\n');
+  local.mock.send(':localhost 366 testbot ' + channelName + ' :End of /NAMES list.\r\n');
+};

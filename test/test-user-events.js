@@ -961,5 +961,124 @@ describe('Client', function() {
         });
       });
     });
+
+    function sharedQuitExamplesFor(command, eventName, msg, messageWrapper) {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      var channelNames = testHelpers.emitNames;
+
+      beforeEach(function() {
+        this.eventSpy = sinon.spy();
+        this.client.on(eventName, this.eventSpy);
+      });
+
+      it('emits event', function(done) {
+        var self = this;
+        testHelpers.joinChannels(self, ['#test'], ['#test'], function() {
+          channelNames(self, '#test', 'testbot user1');
+          self.mock.send(messageWrapper(command, 'user1!~user1@EXAMPLE2.HOST', 'user1', msg));
+          self.client.on('raw', function(message) {
+            if (message.rawCommand !== command) return;
+            expect(message.command).to.equal(command);
+            expect(self.eventSpy.args).to.deep.equal([
+              ['user1', msg, ['#test'], message]
+            ]);
+            done();
+          });
+        });
+      });
+
+      it('works with mixed-case', function(done) {
+        var self = this;
+        testHelpers.joinChannels(self, ['#Test', '#test2', '#Test3'], ['#test', '#Test2', '#Test3'], function() {
+          channelNames(self, '#test', 'testbot user1');
+          channelNames(self, '#Test2', 'testbot user2');
+          channelNames(self, '#Test3', 'testbot user3');
+
+          // chanData is saved with lowercase channel name
+          // hence events are sent lowercase, not using remote case
+          var expected = [
+            ['user1', msg, ['#test']],
+            ['user2', msg, ['#test2']],
+            ['user3', msg, ['#test3']]
+          ];
+
+          var count = 0;
+          self.mock.send(messageWrapper(command, 'user1!~user1@EXAMPLE2.HOST', 'user1', msg));
+          self.mock.send(messageWrapper(command, 'user2!~user1@EXAMPLE2.HOST', 'user2', msg));
+          self.mock.send(messageWrapper(command, 'user3!~user1@EXAMPLE2.HOST', 'user3', msg));
+          self.client.on('raw', processRaw);
+
+          function processRaw(message) {
+            if (message.rawCommand !== command) return;
+            count++;
+            expect(message.command).to.equal(command);
+            expect(self.eventSpy.callCount).to.equal(count);
+            expected[count-1].push(message);
+            expect(self.eventSpy.args[count-1]).to.deep.equal(expected[count-1]);
+            if (count === expected.length) end();
+          }
+
+          function end() {
+            expect(self.eventSpy.args).to.deep.equal(expected);
+            done();
+          }
+        });
+      });
+
+      it('sends only for channels that target user shared with client', function(done) {
+        // TODO
+        var self = this;
+        testHelpers.joinChannels(self, ['#test', '#test2'], ['#test', '#test2'], function() {
+          channelNames(self, '#test', 'testbot user1');
+          channelNames(self, '#test2', 'testbot');
+          self.mock.send(messageWrapper(command, 'user1!~user1@EXAMPLE2.HOST', 'user1', msg));
+          self.client.on('raw', function(message) {
+            if (message.rawCommand !== command) return;
+            expect(message.command).to.equal(command);
+            expect(self.eventSpy.args).to.deep.equal([
+              ['user1', msg, ['#test'], message]
+            ]);
+            done();
+          });
+        });
+      });
+    }
+
+    describe('KILL', function() {
+      function messageWrapper(command, _leaverIdent, leaverNick, msg) {
+        return ':op!~op@OP.HOST ' + command + ' ' + leaverNick + ' :' + msg + '\r\n';
+      }
+      sharedQuitExamplesFor('KILL', 'kill', 'TEST KILL', messageWrapper);
+    });
+
+    describe('QUIT', function() {
+      function messageWrapper(command, leaverIdent, _leaverNick, msg) {
+        return ':' + leaverIdent + ' ' + command + ' :' + msg + '\r\n';
+      }
+      sharedQuitExamplesFor('QUIT', 'quit', 'Quit: Leaving', messageWrapper);
+
+      it('emits debug when someone quits', function(done) {
+        var self = this;
+        this.debugStub = sinon.stub(this.client.out, 'debug');
+        this.debugStub.callThrough();
+
+        testHelpers.joinChannels(self, ['#test', '#test2'], ['#test', '#test2'], function() {
+          testHelpers.emitNames(self, '#test', 'testbot user1');
+          testHelpers.emitNames(self, '#test2', 'testbot');
+          self.mock.send(':user1!~user1@EXAMPLE2.HOST QUIT :QUIT: Leaving\r\n');
+          self.client.on('raw', function(message) {
+            if (message.rawCommand !== 'QUIT') return;
+            expect(self.eventSpy.args).to.deep.equal([
+              ['user1', 'QUIT: Leaving', ['#test'], message]
+            ]);
+            expect(self.debugStub.args).to.deep.include([
+              'QUIT: user1!~user1@EXAMPLE2.HOST QUIT: Leaving'
+            ]);
+            done();
+          });
+        });
+      });
+    });
   });
 });
