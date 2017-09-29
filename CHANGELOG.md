@@ -7,7 +7,7 @@
 
 - The `unhandled` event must not be used to catch specific events – use `raw` for that instead. It should be used to handle explicitly events the bot does not do anything with, such as by notifying the user that such an event has occurred
 - Errors in the `raw` event no longer throw, but are caught and passed to the `error` event. As in the documentation, this may still throw if no handler is bound to this event
-- The `.join` and `.part` methods no longer accepts space-separated lists of channels; this caused the bot to send invalid commands to the server. Instead, use comma-separated channel lists, and then the callback will be called for each channel as in the documentation
+- The `.join` and `.part` methods no longer accept space-separated lists of channels; this caused the bot to send invalid commands to the server. Instead, use comma-separated channel lists, and then the callback will be called for each channel as in the documentation
 - `EventEmitter` is now used directly from the require (i.e. `var EventEmitter = require('events')`, whereas previously `var EventEmitter = require('events').EventEmitter`). This fixes a bug with an atom project using the unforked node-irc version ([relevant pull request](https://github.com/martynsmith/node-irc/pull/521)) but may break compatibility with old versions of node (0.x versions, as those are no longer tested against)
 
 **New features:**
