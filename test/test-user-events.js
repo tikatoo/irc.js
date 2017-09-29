@@ -1079,5 +1079,75 @@ describe('Client', function() {
         });
       });
     });
+
+    describe('MODE', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      beforeEach(function() {
+        this.errorOutStub = sinon.stub(this.client.out, 'error');
+        this.errorOutStub.callThrough();
+        this.errorSpy = sinon.spy();
+        this.client.on('error', this.errorSpy);
+      });
+
+      it('errors on invalid umode', function(done) {
+        var self = this;
+        self.client.send('MODE', 'testbot', '+Z');
+        self.mock.on('line', function(line) {
+          if (line !== 'MODE testbot +Z') return;
+          self.mock.send(':127.0.0.1 501 testbot :Unknown MODE flag\r\n');
+        });
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '501') return;
+          self.client.removeListener('error', self.errorSpy);
+          expect(message).to.deep.equal({
+            prefix: '127.0.0.1',
+            server: '127.0.0.1',
+            rawCommand: '501',
+            commandType: 'error',
+            command: 'err_umodeunknownflag',
+            args: ['testbot', 'Unknown MODE flag']
+          });
+          expect(self.errorOutStub.args).to.deep.equal([[message]]);
+          expect(self.errorSpy.args).to.deep.equal([[message]]);
+          done();
+        });
+      });
+    });
+
+    describe('NICK', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
+
+      beforeEach(function() {
+        this.errorOutStub = sinon.stub(this.client.out, 'error');
+        this.errorOutStub.callThrough();
+        this.errorSpy = sinon.spy();
+        this.client.on('error', this.errorSpy);
+      });
+
+      it('errors on invalid nickname', function(done) {
+        var self = this;
+        self.client.send('NICK', 'ERR@NEOUS');
+        self.mock.on('line', function(line) {
+          if (line !== 'NICK ERR@NEOUS') return;
+          self.mock.send(':127.0.0.1 432 testbot ERR@NEOUS :Erroneous Nickname: Illegal characters\r\n');
+        });
+        self.client.on('raw', function(message) {
+          if (message.rawCommand !== '432') return;
+          self.client.removeListener('error', self.errorSpy);
+          expect(message).to.deep.equal({
+            prefix: '127.0.0.1',
+            server: '127.0.0.1',
+            rawCommand: '432',
+            commandType: 'error',
+            command: 'err_erroneusnickname',
+            args: ['testbot', 'ERR@NEOUS', 'Erroneous Nickname: Illegal characters']
+          });
+          expect(self.errorOutStub.args).to.deep.equal([[message]]);
+          expect(self.errorSpy.args).to.deep.equal([[message]]);
+          done();
+        });
+      });
+    });
   });
 });
