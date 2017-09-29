@@ -1,5 +1,48 @@
 # Change Log
 
+## [v0.8.0](https://github.com/Throne3d/node-irc/tree/v0.8.0) (2017-09-29)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.7.0...v0.8.0)
+
+**Breaking changes:**
+
+- The `unhandled` event must not be used to catch specific events – use `raw` for that instead. It should be used to handle explicitly events the bot does not do anything with, such as by notifying the user that such an event has occurred
+- Errors in the `raw` event no longer throw, but are caught and passed to the `error` event. As in the documentation, this may still throw if no handler is bound to this event
+- The `.join` and `.part` methods no longer accepts space-separated lists of channels; this caused the bot to send invalid commands to the server. Instead, use comma-separated channel lists, and then the callback will be called for each channel as in the documentation
+- `EventEmitter` is now used directly from the require (i.e. `var EventEmitter = require('events')`, whereas previously `var EventEmitter = require('events').EventEmitter`). This fixes a bug with an atom project using the unforked node-irc version ([relevant pull request](https://github.com/martynsmith/node-irc/pull/521)) but may break compatibility with old versions of node (0.x versions, as those are no longer tested against)
+
+**New features:**
+
+- Add `irc.canConvertEncoding()` (aliased to `client.canConvertEncoding()`) to test if the library can convert different encodings with the libraries it's located
+- Add support for `JOIN 0` (which, [in the IRC spec](https://tools.ietf.org/html/rfc2812#page-16), parts from all channels)
+- Handle SASL better: use [the IRCv3 spec](ircv3.net/specs/extensions/sasl-3.1.html), and if the server does not support SASL, emit on the `error` event – fixes part of [#38](https://github.com/Throne3d/node-irc/issues/38)
+
+**Fixed bugs:**
+
+- Ensure the `debug` config option causes the client not to output when disabled – fixes [#34](https://github.com/Throne3d/node-irc/issues/34)
+- Stop renicking properly when `renickCount` is hit. Previously it would renick to a second nickname and then continue the renicking process – fixes [#41](https://github.com/Throne3d/node-irc/issues/41)
+- Handle code `378` on join – fixes part of [#38](https://github.com/Throne3d/node-irc/issues/38)
+- Ensure `client.action` splits long messages properly (that is, it still wraps long lines in the CTCP action markers)
+- Ensure the bot disconnects immediately after programmatically calling `activateFloodProtection` now disconnects immediately like if `opt.floodProtection` is used
+- Store the data from `rpl_isupport` in a way that represents its structure better (objects instead of arrays for key-value pairs, and consistently parse values as integers where applicable)
+- Emit the lowercase version of the `names#channel` event when `#channel` is mixed-case
+- Clean up the automatic reconnection to the server when manually calling `client.disconnect()`
+- Trigger the callback to `join` and `part` even if the server channel differs in case from the one passed to `client.join` or `client.part`
+
+**Misc:**
+
+- Add copyright notice to `lib/irc.js` per fork
+- Update various dependencies (`coveralls`, `nyc`)
+- Docs: Move the 'character set detection' instructions to their own section of the README
+- Docs: Mention [the Gitter chat](https://gitter.im/node-irc) under the 'Further Support' section of the README
+- Docs: Add test coverage badge to README
+- Docs: Reorder config options and add descriptions for missing items – fixes [#33](https://github.com/Throne3d/node-irc/issues/33)
+- Docs: Improve presentation by marking things in inline code tags, instead of italics
+- Docs: Clarify that `client.activateFloodProtection` should only be called once per instance, not once per connection
+- Docs: Fix typos especially around new inline code blocks
+- Tests: Overhaul the whole testing system from `tape` to `mocha`
+- Tests: Improve the `test.js` irc client REPL
+- Tests: Add tests for a *lot* more of the code – this takes our coverage up from [62.614%](https://coveralls.io/builds/12716545) to [94.334%](https://coveralls.io/builds/13502071)! ([#29](https://github.com/Throne3d/node-irc/issues/29))
+
 ## [v0.7.0](https://github.com/Throne3d/node-irc/tree/v0.7.0) (2017-08-06)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.6.2...v0.7.0)
 
