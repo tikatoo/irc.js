@@ -35,6 +35,30 @@ describe('Client', function() {
     });
   });
 
+  describe('#connect', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {client: {autoConnect: false}});
+
+    it('establishes socket without arguments', function(done) {
+      var self = this;
+      self.client.connect();
+      self.client.on('registered', function() {
+        done();
+      });
+    });
+
+    it('accepts callback in first position', function(done) {
+      var self = this;
+      self.client.connect(function() { done(); });
+    });
+
+    it('accepts callback in second position', function(done) {
+      var self = this;
+      self.client.connect(0, function() { done(); });
+    });
+
+    // TODO: test first parameter is respected
+  });
+
   describe('#send', function() {
     testHelpers.hookMockSetup(beforeEach, afterEach);
 
@@ -107,12 +131,14 @@ describe('Client', function() {
         self.client.send('TEST', 'example data');
       }
       expect(wrap).not.to.throw();
-      expect(self.debugSpy.args).to.deep.include([
-        '(Disconnected) SEND:', 'TEST :example data'
-      ]);
-      expect(self.connSpy.args).to.deep.equal([
-        ['QUIT :node-irc says goodbye\r\n']
-      ]);
+      setTimeout(function() {
+        expect(self.debugSpy.args).to.deep.include([
+          '(Disconnected) SEND:', 'TEST :example data'
+        ]);
+        expect(self.connSpy.args).to.deep.equal([
+          ['QUIT :node-irc says goodbye\r\n']
+        ]);
+      }, 10);
     });
   });
 
