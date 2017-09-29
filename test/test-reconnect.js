@@ -6,36 +6,141 @@ var sinon = require('sinon');
 describe('Client', function() {
   describe('reconnection', function() {
     context('on connection interruption', function() {
-      var clientConfig = {retryDelay: 50, autoConnect: false};
+      var clientConfig = {retryDelay: 50, autoConnect: false, millisecondsOfSilenceBeforePingSent: 100, millisecondsBeforePingTimeout: 200};
       var metaConfig = {callbackEarly: true, autoGreet: false};
-      testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: metaConfig});
 
       function sharedExample(callback) {
-        it('reconnects with exactly one connection at a time', function(done) {
-          var mock = this.mock;
-          var client = this.client;
-          var registeredSpy = sinon.spy();
-          client.on('registered', registeredSpy);
+        context('with reconnecting client', function() {
+          testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: metaConfig});
 
-          var conns = [];
-          mock.server.on('connection', function(c) {
-            conns.push(c);
-            mock.greet();
+          it('reconnects with exactly one connection at a time', function(done) {
+            var mock = this.mock;
+            var client = this.client;
+            var registeredSpy = sinon.spy();
+            client.on('registered', registeredSpy);
+            var debugStub = sinon.stub(client.out, 'debug');
+
+            var conns = [];
+            mock.server.on('connection', function(c) {
+              conns.push(c);
+              mock.greet();
+            });
+
+            client.once('registered', function() {
+              setTimeout(function() {
+                callback(client, conns);
+              }, 100);
+              setTimeout(teardown, 400);
+            });
+
+            client.connect();
+
+            function teardown() {
+              expect(registeredSpy.calledTwice).to.be.true;
+              expect(conns.length).to.equal(2);
+              expect(conns[0].destroyed).to.be.true;
+              expect(debugStub.args).to.deep.include(['Waiting 50ms before retrying']);
+              done();
+            }
+          });
+        });
+
+        context('with opt.retryCount', function() {
+          testHelpers.hookMockSetup(beforeEach, afterEach, {client: Object.assign({retryCount: 1}, clientConfig), meta: metaConfig});
+
+          it('retries when disconnected', function(done) {
+            var self = this, mock = self.mock, client = self.client;
+            var registerSpy = sinon.spy();
+            client.on('registered', registerSpy);
+            var debugStub = sinon.stub(client.out, 'debug');
+
+            var conns = [];
+            mock.server.on('connection', function(c) {
+              conns.push(c);
+              mock.greet();
+            });
+
+            client.once('registered', function() {
+              setTimeout(function() {
+                callback(client, conns);
+              }, 100);
+              setTimeout(teardown, 400);
+            });
+
+            client.connect();
+
+            function teardown() {
+              expect(registerSpy.callCount).to.equal(2);
+              expect(conns.length).to.equal(2);
+              expect(conns[0].destroyed).to.be.true;
+              expect(debugStub.args).to.deep.include(['Waiting 50ms before retrying']);
+              done();
+            }
           });
 
-          client.once('registered', function() {
-            callback(client, conns);
-            setTimeout(teardown, 500);
+          it('retries only once', function(done) {
+            var self = this, mock = self.mock, client = self.client;
+            var registerSpy = sinon.spy();
+            client.on('registered', registerSpy);
+            var debugStub = sinon.stub(client.out, 'debug');
+
+            var conns = [];
+            mock.server.on('connection', function(c) {
+              conns.push(c);
+              mock.greet();
+            });
+
+            client.once('registered', function() {
+              setTimeout(function() {
+                callback(client, conns);
+              }, 100);
+              setTimeout(function() {
+                callback(client, conns);
+              }, 200);
+              setTimeout(teardown, 400);
+            });
+
+            client.connect();
+
+            function teardown() {
+              expect(registerSpy.callCount).to.equal(2);
+              expect(conns.length).to.equal(2);
+              expect(conns[0].destroyed).to.be.true;
+              expect(debugStub.args).to.deep.include(['Maximum retry count (1) reached. Aborting']);
+              done();
+            }
           });
 
-          client.connect();
+          it('obeys first parameter to Client.connect', function(done) {
+            // doesn't reconnect
+            var self = this, mock = self.mock, client = self.client;
+            var registerSpy = sinon.spy();
+            client.on('registered', registerSpy);
+            var debugStub = sinon.stub(client.out, 'debug');
 
-          function teardown() {
-            expect(registeredSpy.calledTwice).to.be.true;
-            expect(conns.length).to.equal(2);
-            expect(conns[0].destroyed).to.be.true;
-            done();
-          }
+            var conns = [];
+            mock.server.on('connection', function(c) {
+              conns.push(c);
+              mock.greet();
+            });
+
+            client.once('registered', function() {
+              setTimeout(function() {
+                callback(client, conns);
+              }, 100);
+              setTimeout(teardown, 400);
+            });
+
+            client.connect(1);
+
+            function teardown() {
+              expect(registerSpy.callCount).to.equal(1);
+              expect(conns.length).to.equal(1);
+              expect(conns[0].destroyed).to.be.true;
+              expect(debugStub.args).to.deep.include(['Maximum retry count (1) reached. Aborting']);
+              done();
+            }
+          });
         });
       }
 
