@@ -894,7 +894,4 @@ describe('Client', function() {
   });
 
   it('handles channel-list-related events');
-
-  it('.action actions');
-  it('handles CTCP');
 });

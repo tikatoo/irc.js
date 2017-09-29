@@ -637,4 +637,31 @@ describe('Client', function() {
       ]);
     });
   });
+
+  describe('#ctcp', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {meta: {withoutServer: true}});
+
+    beforeEach(function() {
+      this.saySpy = sinon.spy();
+      this.noticeSpy = sinon.spy();
+      this.client.say = this.saySpy;
+      this.client.notice = this.noticeSpy;
+    });
+
+    it('passes through properly', function() {
+      this.client.ctcp('user', null, 'ACTION message');
+      expect(this.noticeSpy.args).to.deep.equal([
+        ['user', '\u0001ACTION message\u0001']
+      ]);
+      expect(this.saySpy.callCount).to.equal(0);
+    });
+
+    it('uses privmsg instead if told to', function() {
+      this.client.ctcp('user', 'privmsg', 'ACTION message');
+      expect(this.noticeSpy.callCount).to.equal(0);
+      expect(this.saySpy.args).to.deep.equal([
+        ['user', '\u0001ACTION message\u0001']
+      ]);
+    });
+  });
 });
