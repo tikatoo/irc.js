@@ -33,6 +33,22 @@ describe('Client', function() {
       expect(wrap).not.to.throw();
       expect(errorSpy.args).to.deep.equal([[error]]);
     });
+
+    it('does not emit error if disconnect requested', function() {
+      var self = this;
+      var errorSpy = sinon.spy();
+      var error = new Error('test error');
+      function wrap() {
+        self.client.conn.emit('data', ':127.0.0.1 PING :1\r\n');
+      }
+      self.client.on('raw', function() {
+        self.client.disconnect();
+        throw error;
+      });
+      self.client.on('error', errorSpy);
+      expect(wrap).not.to.throw();
+      expect(errorSpy.callCount).to.equal(0);
+    });
   });
 
   describe('#connect', function() {
