@@ -734,9 +734,72 @@ describe('Client', function() {
   });
 
   describe('_speak', function() {
-    itWithCustomMock('calculates maxLength correctly',
-    {client: {messageSplit: 10}, meta: {withoutServer: true}},
-    function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {client: {messageSplit: 10}, meta: {withoutServer: true}});
+
+    beforeEach(function() {
+      this.sendStub = sinon.stub(this.client, 'send');
+      this.selfMsgSpy = sinon.spy();
+      this.client.on('selfMessage', this.selfMsgSpy);
+    });
+
+    it('skips if no text given', function() {
+      this.client._speak('PRIVMSG', 'example');
+      expect(this.sendStub.callCount).to.equal(0);
+    });
+
+    it('sends to channel', function() {
+      this.client._speak('PRIVMSG', '#channel', 'text');
+      expect(this.sendStub.args).to.deep.equal([
+        ['PRIVMSG', '#channel', 'text']
+      ]);
+    });
+
+    it('sends to user', function() {
+      this.client._speak('PRIVMSG', 'testbot2', 'test message');
+      expect(this.sendStub.args).to.deep.equal([
+        ['PRIVMSG', 'testbot2', 'test message']
+      ]);
+    });
+
+    it('emits when PRIVMSG', function() {
+      this.client._speak('PRIVMSG', '#channel', 'test message 3');
+      expect(this.sendStub.callCount).to.equal(1);
+      expect(this.selfMsgSpy.args).to.deep.equal([
+        ['#channel', 'test message 3']
+      ]);
+    });
+
+    it('does not emit when not PRIVMSG', function() {
+      this.client._speak('NOTICE', '#channel', 'test message 3');
+      expect(this.sendStub.callCount).to.equal(1);
+      expect(this.selfMsgSpy.callCount).to.equal(0);
+    });
+
+    it('sends on multiple lines if linebreaks given', function() {
+      this.client._speak('PRIVMSG', '#channel', 'test\r\nnewline');
+      expect(this.sendStub.args).to.deep.equal([
+        ['PRIVMSG', '#channel', 'test'],
+        ['PRIVMSG', '#channel', 'newline']
+      ]);
+      expect(this.selfMsgSpy.args).to.deep.equal([
+        ['#channel', 'test'],
+        ['#channel', 'newline']
+      ]);
+    });
+
+    it('skips blank lines', function() {
+      this.client._speak('PRIVMSG', '#channel', 'test\r\n\r\ntest2');
+      expect(this.sendStub.args).to.deep.equal([
+        ['PRIVMSG', '#channel', 'test'],
+        ['PRIVMSG', '#channel', 'test2']
+      ]);
+      expect(this.selfMsgSpy.args).to.deep.equal([
+        ['#channel', 'test'],
+        ['#channel', 'test2']
+      ]);
+    });
+
+    it('calculates maxLength correctly', function() {
       var client = this.client;
       var tests = [
         {maxLineLength: 30, expected: 10},
@@ -751,6 +814,25 @@ describe('Client', function() {
           ['test message', item.expected, []]
         ]);
       });
+    });
+
+    it('sends for each line split', function() {
+      var splitStub = sinon.stub();
+      splitStub.callsFake(function(str) {
+        return str.split(' ');
+      });
+      this.client._splitLongLines = splitStub;
+      this.client._speak('PRIVMSG', '#channel', 'test message split');
+      expect(this.sendStub.args).to.deep.equal([
+        ['PRIVMSG', '#channel', 'test'],
+        ['PRIVMSG', '#channel', 'message'],
+        ['PRIVMSG', '#channel', 'split']
+      ]);
+      expect(this.selfMsgSpy.args).to.deep.equal([
+        ['#channel', 'test'],
+        ['#channel', 'message'],
+        ['#channel', 'split']
+      ]);
     });
   });
 

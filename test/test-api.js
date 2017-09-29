@@ -524,4 +524,58 @@ describe('Client', function() {
       whoisResponse(this, 'Testbot4', 'testbot4', done);
     });
   });
+
+  // for notice, say, as they work the same
+  function sharedExamplesForSpeaks(commandName, expectedCommand) {
+    // see also test-irc.js #_speak
+
+    beforeEach(function() {
+      this.sendStub = sinon.stub(this.client, 'send');
+    });
+
+    it('skips if no text given', function() {
+      this.client[commandName]('#channel');
+      expect(this.sendStub.callCount).to.equal(0);
+    });
+
+    it('works with basic text', function() {
+      this.client[commandName]('#channel', 'test message');
+      expect(this.sendStub.args).to.deep.equal([
+        [expectedCommand, '#channel', 'test message']
+      ]);
+    });
+
+    it('splits on manual linebreak and skips empty lines', function() {
+      this.client[commandName]('#channel', 'test\r\nmessage\r\n\r\nanother');
+      expect(this.sendStub.args).to.deep.equal([
+        [expectedCommand, '#channel', 'test'],
+        [expectedCommand, '#channel', 'message'],
+        [expectedCommand, '#channel', 'another']
+      ]);
+    });
+
+    it('splits on long lines as normal for _speak', function() {
+      var splitStub = sinon.stub();
+      splitStub.callsFake(function(str) {
+        return str.split(' ');
+      });
+      this.client._splitLongLines = splitStub;
+      this.client[commandName]('#channel', 'test message lines');
+      expect(this.sendStub.args).to.deep.equal([
+        [expectedCommand, '#channel', 'test'],
+        [expectedCommand, '#channel', 'message'],
+        [expectedCommand, '#channel', 'lines']
+      ]);
+    });
+  }
+
+  describe('#notice', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach);
+    sharedExamplesForSpeaks('notice', 'NOTICE');
+  });
+
+  describe('#say', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach);
+    sharedExamplesForSpeaks('say', 'PRIVMSG');
+  });
 });

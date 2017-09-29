@@ -91,7 +91,7 @@ Client
     If you set ``certExpired`` to true, the bot will accept expired certificates.
 
     ``floodProtection`` queues all your messages and slowly transmits them to prevent being kicked for flooding.
-    Alternatively, use ``Client.activateFloodProtection()``` to activate flood protection after instantiating the client.
+    Alternatively, use ``Client.activateFloodProtection()`` to activate flood protection after instantiating the client.
 
     ``floodProtectionDelay`` sets the amount of time that the client will wait between sending subsequent messages when ``floodProtection`` is enabled.
 
@@ -222,7 +222,7 @@ Client
 
 .. js:function:: Client.canConvertEncoding()
 
-    Calls the exported function ``irc.canConvertEncoding()```.
+    Calls the exported function ``irc.canConvertEncoding()``.
 
 Events
 ------
@@ -525,7 +525,7 @@ Events
     ``function (exception) { }``
 
     Emitted when the socket connection to the server emits an error event.
-    See ``net.Socket``'s error event <https://nodejs.org/api/net.html#net_event_error_1>`_ for more information.
+    See `the error event of ``net.Socket`` <https://nodejs.org/api/net.html#net_event_error_1>`_ for more information.
 
 .. js:data:: 'unhandled'
 
