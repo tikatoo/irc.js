@@ -196,6 +196,7 @@ function teardownMocks(mockObj, callback) {
   teardownClient();
   function teardownClient() {
     if (mockObj.client) {
+      if (mockObj.client.floodProtectionEnabled) mockObj.client.deactivateFloodProtection();
       if (mockObj.client.conn && !mockObj.client.conn.requestedDisconnect) {
         mockObj.client.disconnect(teardownMock);
         return;
