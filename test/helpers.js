@@ -218,36 +218,6 @@ function teardownMocks(mockObj, callback) {
 }
 module.exports.teardownMocks = teardownMocks;
 
-function itWithCustomMock(msg, config, body) {
-  it(msg, function(done) {
-    // (teardown) => start => processBody => after
-    function start() {
-      setupMocks(config, processBody);
-    }
-    function after() {
-      teardownMocks({client: this.client, mock: this.mock}, done);
-    }
-    function processBody(mockObj) {
-      this.client = mockObj.client;
-      this.mock = mockObj.mock;
-      this.lineSpy = mockObj.lineSpy;
-      // handle tests that don't claim to be async
-      if (body.length > 0) {
-        body(after);
-      } else {
-        body();
-        after();
-      }
-    }
-    if (this.client || this.mock) {
-      teardownMocks({client: this.client, mock: this.mock}, start);
-    } else {
-      start();
-    }
-  });
-}
-module.exports.itWithCustomMock = itWithCustomMock;
-
 module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach, config) {
   config = config || {};
   beforeEach(function(done) {

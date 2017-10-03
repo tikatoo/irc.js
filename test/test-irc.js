@@ -1,6 +1,5 @@
 var testHelpers = require('./helpers');
 var ircWithStubbedOutput = testHelpers.ircWithStubbedOutput;
-var itWithCustomMock = testHelpers.itWithCustomMock;
 var chai = require('chai');
 var expect = chai.expect;
 var sinon = require('sinon');
@@ -93,63 +92,66 @@ describe('Client', function() {
     });
 
     context('with standard client', function() {
-      testHelpers.hookMockSetup(beforeEach, afterEach, {client: {retryDelay: 50}});
+      context('with server', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {retryDelay: 50}});
+        it('disallows double connections', function() {
+          var client = this.client;
+          var oldConn = client.conn;
+          client.out.error = sinon.spy();
 
-      it('disallows double connections', function() {
-        var client = this.client;
-        var oldConn = client.conn;
-        client.out.error = sinon.spy();
+          client.connect();
+          expect(client.conn).to.equal(oldConn);
+          expect(client.out.error.args).to.deep.equal([
+            ['Connection already active, not reconnecting – please disconnect first']
+          ]);
+        });
 
-        client.connect();
-        expect(client.conn).to.equal(oldConn);
-        expect(client.out.error.args).to.deep.equal([
-          ['Connection already active, not reconnecting – please disconnect first']
-        ]);
+        it('disallows double disconnections', function() {
+          var client = this.client;
+          client.disconnect();
+          expect(client.conn.requestedDisconnect).to.be.true;
+          client.out.error = sinon.spy();
+
+          client.disconnect();
+          expect(client.conn.requestedDisconnect).to.be.true;
+          expect(client.out.error.args).to.deep.equal([
+            ['Connection already disconnecting, skipping disconnect']
+          ]);
+        });
+
+        it('clears up auto-reconnect if told to disconnect while waiting', function(done) {
+          var client = this.client;
+          client.conn.on('close', abortReconnect);
+          client.out.error = sinon.spy();
+          client.end();
+          function abortReconnect() {
+            expect(client.retryTimeout).to.be.ok;
+            client.disconnect();
+            expect(client.conn).to.be.null;
+            expect(client.retryTimeout).to.be.null;
+            expect(client.out.error.args).to.deep.equal([
+              ['Connection already broken, skipping disconnect (and clearing up automatic retry)']
+            ]);
+            done();
+          }
+        });
       });
 
-      it('disallows double disconnections', function() {
-        var client = this.client;
-        client.disconnect();
-        expect(client.conn.requestedDisconnect).to.be.true;
-        client.out.error = sinon.spy();
+      context('without server', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {meta: {withoutServer: true}});
 
-        client.disconnect();
-        expect(client.conn.requestedDisconnect).to.be.true;
-        expect(client.out.error.args).to.deep.equal([
-          ['Connection already disconnecting, skipping disconnect']
-        ]);
-      });
+        it('skips disconnection if not connected', function() {
+          var client = this.client;
+          expect(client.conn).to.be.null;
+          client.out.error = sinon.spy();
 
-      itWithCustomMock('skips disconnection if not connected',
-      {meta: {withoutServer: true}},
-      function() {
-        var client = this.client;
-        expect(client.conn).to.be.null;
-        client.out.error = sinon.spy();
-
-        client.disconnect();
-        expect(client.conn).to.be.null;
-        expect(client.retryTimeout).not.to.be.ok;
-        expect(client.out.error.args).to.deep.equal([
-          ['Connection already broken, skipping disconnect']
-        ]);
-      });
-
-      it('clears up auto-reconnect if told to disconnect while waiting', function(done) {
-        var client = this.client;
-        client.conn.on('close', abortReconnect);
-        client.out.error = sinon.spy();
-        client.end();
-        function abortReconnect() {
-          expect(client.retryTimeout).to.be.ok;
           client.disconnect();
           expect(client.conn).to.be.null;
-          expect(client.retryTimeout).to.be.null;
+          expect(client.retryTimeout).not.to.be.ok;
           expect(client.out.error.args).to.deep.equal([
-            ['Connection already broken, skipping disconnect (and clearing up automatic retry)']
+            ['Connection already broken, skipping disconnect']
           ]);
-          done();
-        }
+        });
       });
     });
 
@@ -507,76 +509,6 @@ describe('Client', function() {
     describe('with sasl', function() {
       var clientConfig = {sasl: true, nick: 'testbot', userName: 'nodebot', realName: 'node', password: 'test'};
       var metaConfig = {autoGreet: false, callbackEarly: true};
-      testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: metaConfig});
-
-      beforeEach(function() {
-        this.sendStub = sinon.stub(this.client, 'send');
-        this.sendStub.callThrough();
-      });
-
-      it('sends sasl on attempted connection', function(done) {
-        var self = this;
-        self.client.on('connect', function() {
-          expect(self.sendStub.args).to.deep.equal([
-            ['CAP', 'REQ', 'sasl'],
-            ['NICK', 'testbot'],
-            ['USER', 'nodebot', 8, '*', 'node']
-          ]);
-          done();
-        });
-      });
-
-      it('responds to SASL capability acknowledgement', function(done) {
-        var self = this;
-        self.mock.on('line', function(line) {
-          if (line === 'CAP REQ sasl') {
-            self.mock.send(':127.0.0.1 CAP * ACK :sasl\r\n');
-          } else if (line === 'AUTHENTICATE PLAIN') {
-            end();
-          }
-        });
-        function end() {
-          expect(self.sendStub.args).to.deep.equal([
-            ['CAP', 'REQ', 'sasl'],
-            ['NICK', 'testbot'],
-            ['USER', 'nodebot', 8, '*', 'node'],
-            ['AUTHENTICATE', 'PLAIN']
-          ]);
-          done();
-        }
-      });
-
-      it('errors if server NAKs SASL', function(done) {
-        var self = this;
-        self.errorSpy = sinon.spy();
-        self.client.on('error', self.errorSpy);
-        self.mock.on('line', function(line) {
-          if (line !== 'CAP REQ sasl') return;
-          self.mock.send(':127.0.0.1 CAP * NAK :sasl\r\n');
-        });
-        self.client.on('raw', function(message) {
-          if (message.rawCommand === 'CAP') end();
-        });
-        function end() {
-          self.client.removeListener('error', self.errorSpy);
-          expect(self.sendStub.args).to.deep.equal([
-            ['CAP', 'REQ', 'sasl'],
-            ['NICK', 'testbot'],
-            ['USER', 'nodebot', 8, '*', 'node']
-          ]);
-          expect(self.errorSpy.args).to.deep.equal([
-            [{
-              prefix: '127.0.0.1',
-              server: '127.0.0.1',
-              command: 'CAP',
-              rawCommand: 'CAP',
-              commandType: 'normal',
-              args: ['*', 'NAK', 'sasl']
-            }]
-          ]);
-          done();
-        }
-      });
 
       function mockSaslAccepts(local, authMessage, end) {
         local.mock.on('line', function(line) {
@@ -598,113 +530,190 @@ describe('Client', function() {
         });
       }
 
-      it('authenticates', function(done) {
-        var self = this;
-        mockSaslAccepts(self, 'dGVzdGJvdABub2RlYm90AHRlc3Q=', end);
-        function end() {
-          expect(self.sendStub.args).to.deep.equal([
-            ['CAP', 'REQ', 'sasl'],
-            ['NICK', 'testbot'],
-            ['USER', 'nodebot', 8, '*', 'node'],
-            ['AUTHENTICATE', 'PLAIN'],
-            ['AUTHENTICATE', 'dGVzdGJvdABub2RlYm90AHRlc3Q='],
-            ['CAP', 'END']
-          ]);
-          expect(self.unhandledSpy.args).to.deep.equal([]);
-          done();
-        }
+      context('with default password', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig, meta: metaConfig});
+
+        beforeEach(function() {
+          this.sendStub = sinon.stub(this.client, 'send');
+          this.sendStub.callThrough();
+        });
+
+        it('sends sasl on attempted connection', function(done) {
+          var self = this;
+          self.client.on('connect', function() {
+            expect(self.sendStub.args).to.deep.equal([
+              ['CAP', 'REQ', 'sasl'],
+              ['NICK', 'testbot'],
+              ['USER', 'nodebot', 8, '*', 'node']
+            ]);
+            done();
+          });
+        });
+
+        it('responds to SASL capability acknowledgement', function(done) {
+          var self = this;
+          self.mock.on('line', function(line) {
+            if (line === 'CAP REQ sasl') {
+              self.mock.send(':127.0.0.1 CAP * ACK :sasl\r\n');
+            } else if (line === 'AUTHENTICATE PLAIN') {
+              end();
+            }
+          });
+          function end() {
+            expect(self.sendStub.args).to.deep.equal([
+              ['CAP', 'REQ', 'sasl'],
+              ['NICK', 'testbot'],
+              ['USER', 'nodebot', 8, '*', 'node'],
+              ['AUTHENTICATE', 'PLAIN']
+            ]);
+            done();
+          }
+        });
+
+        it('errors if server NAKs SASL', function(done) {
+          var self = this;
+          self.errorSpy = sinon.spy();
+          self.client.on('error', self.errorSpy);
+          self.mock.on('line', function(line) {
+            if (line !== 'CAP REQ sasl') return;
+            self.mock.send(':127.0.0.1 CAP * NAK :sasl\r\n');
+          });
+          self.client.on('raw', function(message) {
+            if (message.rawCommand === 'CAP') end();
+          });
+          function end() {
+            self.client.removeListener('error', self.errorSpy);
+            expect(self.sendStub.args).to.deep.equal([
+              ['CAP', 'REQ', 'sasl'],
+              ['NICK', 'testbot'],
+              ['USER', 'nodebot', 8, '*', 'node']
+            ]);
+            expect(self.errorSpy.args).to.deep.equal([
+              [{
+                prefix: '127.0.0.1',
+                server: '127.0.0.1',
+                command: 'CAP',
+                rawCommand: 'CAP',
+                commandType: 'normal',
+                args: ['*', 'NAK', 'sasl']
+              }]
+            ]);
+            done();
+          }
+        });
+
+        it('authenticates', function(done) {
+          var self = this;
+          mockSaslAccepts(self, 'dGVzdGJvdABub2RlYm90AHRlc3Q=', end);
+          function end() {
+            expect(self.sendStub.args).to.deep.equal([
+              ['CAP', 'REQ', 'sasl'],
+              ['NICK', 'testbot'],
+              ['USER', 'nodebot', 8, '*', 'node'],
+              ['AUTHENTICATE', 'PLAIN'],
+              ['AUTHENTICATE', 'dGVzdGJvdABub2RlYm90AHRlc3Q='],
+              ['CAP', 'END']
+            ]);
+            expect(self.unhandledSpy.args).to.deep.equal([]);
+            done();
+          }
+        });
       });
 
-      itWithCustomMock('splits authenticate response',
-      {client: Object.assign({}, clientConfig, {password: 'long'.repeat(75)}), meta: metaConfig},
-      function(done) {
-        this.sendStub = sinon.stub(this.client, 'send');
-        this.sendStub.callThrough();
-        var self = this;
-        mockSaslAccepts(self, 'bG9uZ2xvbmdsb25nbG9uZw==', end);
-        function end() {
-          expect(self.sendStub.args).to.deep.equal([
-            ['CAP', 'REQ', 'sasl'],
-            ['NICK', 'testbot'],
-            ['USER', 'nodebot', 8, '*', 'node'],
-            ['AUTHENTICATE', 'PLAIN'],
-            // fixture of base64 encoded userName, nick, password
-            ['AUTHENTICATE', 'dGVzdGJvdABub2RlYm90AG' + 'xvbmdsb25nbG9uZ2'.repeat(23) + 'xvbmdsb25n'],
-            ['AUTHENTICATE', 'bG9uZ2xvbmdsb25nbG9uZw=='],
-            ['CAP', 'END']
-          ]);
-          done();
-        }
+      context('with too-long password', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: Object.assign({}, clientConfig, {password: 'long'.repeat(75)}), meta: metaConfig});
+
+        it('splits authenticate response', function(done) {
+          this.sendStub = sinon.stub(this.client, 'send');
+          this.sendStub.callThrough();
+          var self = this;
+          mockSaslAccepts(self, 'bG9uZ2xvbmdsb25nbG9uZw==', end);
+          function end() {
+            expect(self.sendStub.args).to.deep.equal([
+              ['CAP', 'REQ', 'sasl'],
+              ['NICK', 'testbot'],
+              ['USER', 'nodebot', 8, '*', 'node'],
+              ['AUTHENTICATE', 'PLAIN'],
+              // fixture of base64 encoded userName, nick, password
+              ['AUTHENTICATE', 'dGVzdGJvdABub2RlYm90AG' + 'xvbmdsb25nbG9uZ2'.repeat(23) + 'xvbmdsb25n'],
+              ['AUTHENTICATE', 'bG9uZ2xvbmdsb25nbG9uZw=='],
+              ['CAP', 'END']
+            ]);
+            done();
+          }
+        });
       });
 
-      itWithCustomMock('handles a 400-byte response',
-      {client: Object.assign({}, clientConfig, {password: 'long'.repeat(70) + 'test'}), meta: metaConfig},
-      function(done) {
-        this.sendStub = sinon.stub(this.client, 'send');
-        this.sendStub.callThrough();
-        var self = this;
-        mockSaslAccepts(self, '+', end);
-        function end() {
-          expect(self.sendStub.args).to.deep.equal([
-            ['CAP', 'REQ', 'sasl'],
-            ['NICK', 'testbot'],
-            ['USER', 'nodebot', 8, '*', 'node'],
-            ['AUTHENTICATE', 'PLAIN'],
-            // fixture of base64 encoded userName, nick, password
-            ['AUTHENTICATE', 'dGVzdGJvdABub2RlYm90AG' + 'xvbmdsb25nbG9uZ2'.repeat(23) + 'xvbmd0ZXN0'],
-            ['AUTHENTICATE', '+'],
-            ['CAP', 'END']
-          ]);
-          done();
-        }
+      context('with just-long password', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: Object.assign({}, clientConfig, {password: 'long'.repeat(70) + 'test'}), meta: metaConfig});
+        it('handles a 400-byte response', function(done) {
+          this.sendStub = sinon.stub(this.client, 'send');
+          this.sendStub.callThrough();
+          var self = this;
+          mockSaslAccepts(self, '+', end);
+          function end() {
+            expect(self.sendStub.args).to.deep.equal([
+              ['CAP', 'REQ', 'sasl'],
+              ['NICK', 'testbot'],
+              ['USER', 'nodebot', 8, '*', 'node'],
+              ['AUTHENTICATE', 'PLAIN'],
+              // fixture of base64 encoded userName, nick, password
+              ['AUTHENTICATE', 'dGVzdGJvdABub2RlYm90AG' + 'xvbmdsb25nbG9uZ2'.repeat(23) + 'xvbmd0ZXN0'],
+              ['AUTHENTICATE', '+'],
+              ['CAP', 'END']
+            ]);
+            done();
+          }
+        });
       });
 
-      itWithCustomMock('outputs sasl errors properly',
-      {client: clientConfig},
-      function(done) {
-        var self = this;
-        self.errorSpy = sinon.spy();
-        self.client.on('error', self.errorSpy);
-        self.mock.send(':127.0.0.1 CAP * ACK :sasl\r\n');
-        self.mock.send(':127.0.0.1 902 testbot :You must use a nick assigned to you\r\n'); // err_nicklocked
-        self.mock.send(':127.0.0.1 904 testbot :SASL authentication failed\r\n'); // err_saslfail
-        self.mock.send(':127.0.0.1 905 testbot :SASL message too long\r\n'); // err_sasltoolong
-        self.mock.send(':127.0.0.1 906 testbot :SASL authentication aborted\r\n'); // err_saslaborted
-        self.mock.send(':127.0.0.1 907 testbot :You have already authenticated using SASL\r\n'); // err_saslalready
-        self.mock.send(':127.0.0.1 PING :endtest\r\n');
-        self.client.on('ping', endTest);
-        function endTest() {
-          var messageBasis = {
-            prefix: '127.0.0.1',
-            server: '127.0.0.1',
-            commandType: 'error'
-          };
-          self.client.removeListener('error', self.errorSpy);
-          expect(self.errorSpy.args).to.deep.equal([
-            [Object.assign({
-              rawCommand: '902',
-              command: 'err_nicklocked',
-              args: ['testbot', 'You must use a nick assigned to you']
-            }, messageBasis)],[Object.assign({
-              rawCommand: '904',
-              command: 'err_saslfail',
-              args: ['testbot', 'SASL authentication failed']
-            }, messageBasis)],[Object.assign({
-              rawCommand: '905',
-              command: 'err_sasltoolong',
-              args: ['testbot', 'SASL message too long']
-            }, messageBasis)],[Object.assign({
-              rawCommand: '906',
-              command: 'err_saslaborted',
-              args: ['testbot', 'SASL authentication aborted']
-            }, messageBasis)],[Object.assign({
-              rawCommand: '907',
-              command: 'err_saslalready',
-              args: ['testbot', 'You have already authenticated using SASL']
-            }, messageBasis)]
-          ]);
-          done();
-        }
+      context('without calling back early', function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
+        it('outputs sasl errors properly', function(done) {
+          var self = this;
+          self.errorSpy = sinon.spy();
+          self.client.on('error', self.errorSpy);
+          self.mock.send(':127.0.0.1 CAP * ACK :sasl\r\n');
+          self.mock.send(':127.0.0.1 902 testbot :You must use a nick assigned to you\r\n'); // err_nicklocked
+          self.mock.send(':127.0.0.1 904 testbot :SASL authentication failed\r\n'); // err_saslfail
+          self.mock.send(':127.0.0.1 905 testbot :SASL message too long\r\n'); // err_sasltoolong
+          self.mock.send(':127.0.0.1 906 testbot :SASL authentication aborted\r\n'); // err_saslaborted
+          self.mock.send(':127.0.0.1 907 testbot :You have already authenticated using SASL\r\n'); // err_saslalready
+          self.mock.send(':127.0.0.1 PING :endtest\r\n');
+          self.client.on('ping', endTest);
+          function endTest() {
+            var messageBasis = {
+              prefix: '127.0.0.1',
+              server: '127.0.0.1',
+              commandType: 'error'
+            };
+            self.client.removeListener('error', self.errorSpy);
+            expect(self.errorSpy.args).to.deep.equal([
+              [Object.assign({
+                rawCommand: '902',
+                command: 'err_nicklocked',
+                args: ['testbot', 'You must use a nick assigned to you']
+              }, messageBasis)],[Object.assign({
+                rawCommand: '904',
+                command: 'err_saslfail',
+                args: ['testbot', 'SASL authentication failed']
+              }, messageBasis)],[Object.assign({
+                rawCommand: '905',
+                command: 'err_sasltoolong',
+                args: ['testbot', 'SASL message too long']
+              }, messageBasis)],[Object.assign({
+                rawCommand: '906',
+                command: 'err_saslaborted',
+                args: ['testbot', 'SASL authentication aborted']
+              }, messageBasis)],[Object.assign({
+                rawCommand: '907',
+                command: 'err_saslalready',
+                args: ['testbot', 'You have already authenticated using SASL']
+              }, messageBasis)]
+            ]);
+            done();
+          }
+        });
       });
     });
 
@@ -917,15 +926,16 @@ describe('Client', function() {
     });
   });
 
-  itWithCustomMock('does not crash when disconnected and sending messages',
-  {meta: {withoutServer: true}},
-  function() {
-    var client = this.client;
-    function wrap() {
-      client.say('#channel', 'message2');
-      client.end();
-      client.say('#channel', 'message3');
-    }
-    expect(wrap).not.to.throw();
+  describe('without server', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach, {meta: {withoutServer: true}});
+    it('does not crash when disconnected and sending messages', function() {
+      var client = this.client;
+      function wrap() {
+        client.say('#channel', 'message2');
+        client.end();
+        client.say('#channel', 'message3');
+      }
+      expect(wrap).not.to.throw();
+    });
   });
 });

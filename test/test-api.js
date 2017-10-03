@@ -1,5 +1,4 @@
 var testHelpers = require('./helpers');
-var itWithCustomMock = testHelpers.itWithCustomMock;
 var joinChannelsBefore = testHelpers.joinChannelsBefore;
 var chai = require('chai');
 var expect = chai.expect;
@@ -76,83 +75,90 @@ describe('Client', function() {
   });
 
   describe('#send', function() {
-    testHelpers.hookMockSetup(beforeEach, afterEach);
+    describe('with standard client and server', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach);
 
-    beforeEach(function() {
-      this.debugSpy = sinon.spy();
-      this.connSpy = sinon.spy();
-      this.client.out.debug = this.debugSpy;
-      this.client.conn.write = this.connSpy;
+      beforeEach(function() {
+        this.debugSpy = sinon.spy();
+        this.connSpy = sinon.spy();
+        this.client.out.debug = this.debugSpy;
+        this.client.conn.write = this.connSpy;
+      });
+
+      it('works with simple data', function() {
+        this.client.send('JOIN', '#channel');
+        expect(this.debugSpy.args).to.deep.equal([
+          ['SEND:', 'JOIN #channel']
+        ]);
+        expect(this.connSpy.args).to.deep.equal([
+          ['JOIN #channel\r\n']
+        ]);
+      });
+
+      it('works with multiple arguments', function() {
+        this.client.send('TEST', 'example', 'data');
+        expect(this.debugSpy.args).to.deep.equal([
+          ['SEND:', 'TEST example data']
+        ]);
+        expect(this.connSpy.args).to.deep.equal([
+          ['TEST example data\r\n']
+        ]);
+      });
+
+      it('works with multi-word last parameter', function() {
+        this.client.send('TEST', 'example data');
+        expect(this.debugSpy.args).to.deep.equal([
+          ['SEND:', 'TEST :example data']
+        ]);
+        expect(this.connSpy.args).to.deep.equal([
+          ['TEST :example data\r\n']
+        ]);
+      });
+
+      it('works with comma-separated channel example', function() {
+        this.client.send('PART', '#channel1,#channel2,#channel3', 'test message');
+        expect(this.debugSpy.args).to.deep.equal([
+          ['SEND:', 'PART #channel1,#channel2,#channel3 :test message']
+        ]);
+        expect(this.connSpy.args).to.deep.equal([
+          ['PART #channel1,#channel2,#channel3 :test message\r\n']
+        ]);
+      });
+
+      it('does not throw when disconnecting', function() {
+        var self = this;
+        function wrap() {
+          self.client.disconnect();
+          self.client.send('TEST', 'example data');
+        }
+        expect(wrap).not.to.throw();
+        expect(self.debugSpy.args).to.deep.include([
+          '(Disconnected) SEND:', 'TEST :example data'
+        ]);
+        expect(self.connSpy.args).to.deep.equal([
+          ['QUIT :node-irc says goodbye\r\n']
+        ]);
+      });
     });
 
-    it('works with simple data', function() {
-      this.client.send('JOIN', '#channel');
-      expect(this.debugSpy.args).to.deep.equal([
-        ['SEND:', 'JOIN #channel']
-      ]);
-      expect(this.connSpy.args).to.deep.equal([
-        ['JOIN #channel\r\n']
-      ]);
-    });
+    describe('with client but no server', function() {
+      testHelpers.hookMockSetup(beforeEach, afterEach, {meta: {withoutServer: true}});
 
-    it('works with multiple arguments', function() {
-      this.client.send('TEST', 'example', 'data');
-      expect(this.debugSpy.args).to.deep.equal([
-        ['SEND:', 'TEST example data']
-      ]);
-      expect(this.connSpy.args).to.deep.equal([
-        ['TEST example data\r\n']
-      ]);
-    });
+      beforeEach(function() {
+        this.debugSpy = sinon.spy();
+        this.client.out.debug = this.debugSpy;
+      });
 
-    it('works with multi-word last parameter', function() {
-      this.client.send('TEST', 'example data');
-      expect(this.debugSpy.args).to.deep.equal([
-        ['SEND:', 'TEST :example data']
-      ]);
-      expect(this.connSpy.args).to.deep.equal([
-        ['TEST :example data\r\n']
-      ]);
-    });
-
-    it('works with comma-separated channel example', function() {
-      this.client.send('PART', '#channel1,#channel2,#channel3', 'test message');
-      expect(this.debugSpy.args).to.deep.equal([
-        ['SEND:', 'PART #channel1,#channel2,#channel3 :test message']
-      ]);
-      expect(this.connSpy.args).to.deep.equal([
-        ['PART #channel1,#channel2,#channel3 :test message\r\n']
-      ]);
-    });
-
-    itWithCustomMock('does not throw when disconnected',
-    {meta: {withoutServer: true}},
-    function() {
-      var self = this;
-      self.debugSpy = sinon.spy();
-      self.client.out.debug = self.debugSpy;
-      function wrap() {
-        self.client.send('TEST', 'example data');
-      }
-      expect(wrap).not.to.throw();
-      expect(self.debugSpy.args).to.deep.equal([
-        ['(Disconnected) SEND:', 'TEST :example data']
-      ]);
-    });
-
-    it('does not throw when disconnecting', function() {
-      var self = this;
-      function wrap() {
-        self.client.disconnect();
-        self.client.send('TEST', 'example data');
-      }
-      expect(wrap).not.to.throw();
-      expect(self.debugSpy.args).to.deep.include([
-        '(Disconnected) SEND:', 'TEST :example data'
-      ]);
-      expect(self.connSpy.args).to.deep.equal([
-        ['QUIT :node-irc says goodbye\r\n']
-      ]);
+      it('does not throw when disconnected', function() {
+        var self = this;
+        function wrap() {
+          self.client.send('TEST', 'example data');
+        }
+        expect(wrap).not.to.throw();
+        expect(self.debugSpy.args).to.deep.equal([
+          ['(Disconnected) SEND:', 'TEST :example data']
+        ]);
+      });
     });
   });
 
