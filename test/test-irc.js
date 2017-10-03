@@ -1,5 +1,5 @@
 var testHelpers = require('./helpers');
-var irc = testHelpers.ircWithStubbedOutput;
+var ircWithStubbedOutput = testHelpers.ircWithStubbedOutput;
 var itWithCustomMock = testHelpers.itWithCustomMock;
 var chai = require('chai');
 var expect = chai.expect;
@@ -14,9 +14,9 @@ describe('Client', function() {
         var mock = testHelpers.MockIrcd(port, 'utf-8', isSecure, true);
         var client;
         if (skipObject) {
-          client = new irc.Client('localhost', 'testbot');
+          client = ircWithStubbedOutput('localhost', 'testbot');
         } else if (isSecure && useSecureObject) {
-          client = new irc.Client('notlocalhost', 'testbot', {
+          client = ircWithStubbedOutput('notlocalhost', 'testbot', {
             secure: {
               host: 'localhost',
               port: port,
@@ -27,7 +27,7 @@ describe('Client', function() {
             debug: true
           });
         } else {
-          client = new irc.Client('localhost', 'testbot', {
+          client = ircWithStubbedOutput('localhost', 'testbot', {
             secure: isSecure,
             port: port,
             selfSigned: true,

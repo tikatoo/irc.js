@@ -8,10 +8,13 @@ var util = require('util');
 var EventEmitter = require('events');
 var sinon = require('sinon');
 var proxyquire = require('proxyquire');
-var stubbedUtil = {log: null};
+var stubbedUtil = {log: util.log};
 var irc = proxyquire('../lib/irc', {util: stubbedUtil});
 
-module.exports.ircWithStubbedOutput = irc;
+module.exports.ircWithStubbedOutput = function(server, clientNick, opt) {
+  stubbedUtil.log = sinon.stub();
+  return new irc.Client(server, clientNick, opt);
+};
 
 var MockIrcd = function(port, encoding, isSecure, quiet) {
     var self = this;
