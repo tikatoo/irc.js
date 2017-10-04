@@ -83,10 +83,11 @@ describe('Client', function() {
           });
         });
 
-        it('does not plan to renick', function() {
+        it('does not plan to renick', function(done) {
           var client = this.client;
           defaultRenickTest(this, function onRegistered() {
             expect(client.conn.renickInterval).to.be.undefined;
+            done();
           });
         });
 

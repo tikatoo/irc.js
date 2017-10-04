@@ -7,7 +7,7 @@
     "lint": "eslint .",
     "posttest": "nyc report && npm run lint",
     "report": "nyc report --reporter=text-lcov | coveralls",
-    "test": "nyc --reporter=none mocha test/test-*.js -- --no-exit"
+    "test": "nyc --reporter=none mocha test/test-*.js"
   },
   "contributors": [
     "Fionn Kelleher <me@fionn.co>",
@@ -44,7 +44,7 @@
     "chai": "^4.1.2",
     "coveralls": "^3.0.0",
     "eslint": "^4.4.0",
-    "mocha": "^3.5.3",
+    "mocha": "^4.0.0",
     "nyc": "^11.2.1",
     "proxyquire": "^1.8.0",
     "sinon": "^4.0.0"

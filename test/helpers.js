@@ -8,10 +8,13 @@ var util = require('util');
 var EventEmitter = require('events');
 var sinon = require('sinon');
 var proxyquire = require('proxyquire');
-var stubbedUtil = {log: null};
+var stubbedUtil = {log: util.log};
 var irc = proxyquire('../lib/irc', {util: stubbedUtil});
 
-module.exports.ircWithStubbedOutput = irc;
+module.exports.ircWithStubbedOutput = function(server, clientNick, opt) {
+  stubbedUtil.log = sinon.stub();
+  return new irc.Client(server, clientNick, opt);
+};
 
 var MockIrcd = function(port, encoding, isSecure, quiet) {
     var self = this;
@@ -196,6 +199,7 @@ function teardownMocks(mockObj, callback) {
   teardownClient();
   function teardownClient() {
     if (mockObj.client) {
+      if (mockObj.client.floodProtectionEnabled) mockObj.client.deactivateFloodProtection();
       if (mockObj.client.conn && !mockObj.client.conn.requestedDisconnect) {
         mockObj.client.disconnect(teardownMock);
         return;
@@ -213,36 +217,6 @@ function teardownMocks(mockObj, callback) {
   }
 }
 module.exports.teardownMocks = teardownMocks;
-
-function itWithCustomMock(msg, config, body) {
-  it(msg, function(done) {
-    // (teardown) => start => processBody => after
-    function start() {
-      setupMocks(config, processBody);
-    }
-    function after() {
-      teardownMocks({client: this.client, mock: this.mock}, done);
-    }
-    function processBody(mockObj) {
-      this.client = mockObj.client;
-      this.mock = mockObj.mock;
-      this.lineSpy = mockObj.lineSpy;
-      // handle tests that don't claim to be async
-      if (body.length > 0) {
-        body(after);
-      } else {
-        body();
-        after();
-      }
-    }
-    if (this.client || this.mock) {
-      teardownMocks({client: this.client, mock: this.mock}, start);
-    } else {
-      start();
-    }
-  });
-}
-module.exports.itWithCustomMock = itWithCustomMock;
 
 module.exports.hookMockSetup = function hookMockSetup(beforeEach, afterEach, config) {
   config = config || {};
