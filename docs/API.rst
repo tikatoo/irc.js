@@ -148,6 +148,9 @@ Client
     ``channelList`` supports multiple channels in a comma-separated string (`as in the IRC protocol <https://tools.ietf.org/html/rfc2812#page-16>`_).
     The callback is called for each channel, but does not include the ``channel`` parameter (see the ``join#channel`` event).
 
+    To optionally send a list of keys (channel passwords) associated with each channel, add a space after the list of channels and append the list of channels.
+    For example: ``#foo,&bar fubar,foobar`` will join the channel ``#foo`` with the key ``fubar`` and the channel ``&bar`` with the key ``foobar``.
+
     Passing ``'0'`` to the ``channelList`` parameter will send ``JOIN 0`` to the server.
     As in the IRC spec, this will cause the client to part from all current channels.
     In such a case, the callback will not be called; you should instead bind to the ``part`` event to keep track of the progress made.

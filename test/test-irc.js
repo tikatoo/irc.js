@@ -217,7 +217,7 @@ describe('Client', function() {
       }
 
       context('with opt.channels', function() {
-        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {channels: ['#test', '#test2']}});
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {channels: ['#test', '#test2', '#test3 password']}});
 
         sharedTests();
 
@@ -226,7 +226,7 @@ describe('Client', function() {
         });
 
         it('joins specified channels on motd', function(done) {
-          var expected = [['JOIN #test'], ['JOIN #test2']];
+          var expected = [['JOIN #test'], ['JOIN #test2'], ['JOIN #test3 password']];
           var self = this;
           sendMotd(self.mock, 'testbot');
           self.client.on('motd', function() {
@@ -878,6 +878,40 @@ describe('Client', function() {
         ['#channel', 'message'],
         ['#channel', 'split']
       ]);
+    });
+  });
+
+  describe('_findChannelFromStrings', function() {
+    testHelpers.hookMockSetup(beforeEach, afterEach);
+
+    it('detects channels in opt.channels', function() {
+      this.client.opt.channels = ['#chan2', '#chan3'];
+      expect(this.client._findChannelFromStrings('#chan')).to.equal(-1);
+      expect(this.client._findChannelFromStrings('#chan2')).to.equal(0);
+      expect(this.client._findChannelFromStrings('#chan3')).to.equal(1);
+    });
+
+    it('detects case-insensitively', function() {
+      this.client.opt.channels = ['#Chan2', '#Chan3'];
+      expect(this.client._findChannelFromStrings('#chan')).to.equal(-1);
+      expect(this.client._findChannelFromStrings('#chan2')).to.equal(0);
+      expect(this.client._findChannelFromStrings('#chan3')).to.equal(1);
+
+      this.client.opt.channels = ['#chan2', '#chan3'];
+      expect(this.client._findChannelFromStrings('#Chan')).to.equal(-1);
+      expect(this.client._findChannelFromStrings('#Chan2')).to.equal(0);
+      expect(this.client._findChannelFromStrings('#Chan3')).to.equal(1);
+    });
+
+    it('ignores keys', function() {
+      this.client.opt.channels = ['#chan2 key2', '#Chan3 key3'];
+      expect(this.client._findChannelFromStrings('#chan')).to.equal(-1);
+      expect(this.client._findChannelFromStrings('#chan2')).to.equal(0);
+      expect(this.client._findChannelFromStrings('#chan3')).to.equal(1);
+
+      expect(this.client._findChannelFromStrings('#Chan')).to.equal(-1);
+      expect(this.client._findChannelFromStrings('#Chan2')).to.equal(0);
+      expect(this.client._findChannelFromStrings('#Chan3')).to.equal(1);
     });
   });
 
