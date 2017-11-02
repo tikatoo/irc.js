@@ -1,7 +1,7 @@
 {
   "name": "irc-upd",
   "description": "An IRC client library for node",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "author": "Edward Jones <throne3d@gmail.com>",
   "scripts": {
     "lint": "eslint .",
