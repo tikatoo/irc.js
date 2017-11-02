@@ -1,5 +1,19 @@
 # Change Log
 
+## [v0.8.1](https://github.com/Throne3d/node-irc/tree/v0.8.1) (2017-11-02)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.8.0...v0.8.1)
+
+**Fixed bugs:**
+
+- Fix `.join` with channel keys (passwords) – this broke as a result of the previous change to accept comma-separated lists of channels
+- Make the automatic joining of `opt.channels` channels use the internal `.join` method, so channel keys can again be handled properly
+- Fix matching channels when adding to or removing from `opt.channels` automatically (on `.join` or `.part`), especially around channels with channel keys or different casing
+
+**Misc:**
+
+- Tests: Upgrade `mocha` dependency to `^4.0.0`
+- Tests: Fix never-ending tests by manually disabling the flood protection interval when the client is used up
+
 ## [v0.8.0](https://github.com/Throne3d/node-irc/tree/v0.8.0) (2017-09-29)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.7.0...v0.8.0)
 
