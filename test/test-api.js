@@ -255,6 +255,48 @@ describe('Client', function() {
           if (i === channels.length) done();
         }
       });
+
+      it('sends right command with key', function() {
+        var self = this;
+        function wrap() {
+          self.client.join(channels.join(',') + ' ' +  channels.map(function() { return 'key'; }).join(','));
+        }
+        expect(wrap).not.to.throw();
+        expect(this.sendSpy.args).to.deep.equal([
+          ['JOIN', channels.join(','), channels.map(function() { return 'key'; }).join(',')]
+        ]);
+      });
+
+      it('works with key', function(done) {
+        var self = this;
+        self.client.opt.channels = [channels[0]];
+        self.client.join(channels.join(',') + ' ' +  channels.map(function() { return 'key'; }).join(','), check);
+        remoteChannels.forEach(function(remoteChan) {
+          self.mock.send(':testbot!~testbot@EXAMPLE.HOST JOIN :' + remoteChan + '\r\n');
+        });
+
+        var i = 0;
+        function check(nick, message) {
+          expect(nick).to.equal('testbot');
+          expect(message).to.deep.equal({
+            prefix: 'testbot!~testbot@EXAMPLE.HOST',
+            nick: 'testbot',
+            user: '~testbot',
+            host: 'EXAMPLE.HOST',
+            commandType: 'normal',
+            command: 'JOIN',
+            rawCommand: 'JOIN',
+            args: [remoteChannels[i]]
+          });
+          i++;
+          if (i === channels.length) end();
+        }
+
+        function end() {
+          expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(downcaseChannels(channels));
+          done();
+        }
+      });
     }
 
     context('with same lowercase local and remote channel', function() {
