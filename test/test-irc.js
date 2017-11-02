@@ -217,7 +217,7 @@ describe('Client', function() {
       }
 
       context('with opt.channels', function() {
-        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {channels: ['#test', '#test2']}});
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {channels: ['#test', '#test2', '#test3 password']}});
 
         sharedTests();
 
@@ -226,7 +226,7 @@ describe('Client', function() {
         });
 
         it('joins specified channels on motd', function(done) {
-          var expected = [['JOIN #test'], ['JOIN #test2']];
+          var expected = [['JOIN #test'], ['JOIN #test2'], ['JOIN #test3 password']];
           var self = this;
           sendMotd(self.mock, 'testbot');
           self.client.on('motd', function() {

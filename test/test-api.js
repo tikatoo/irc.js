@@ -293,7 +293,12 @@ describe('Client', function() {
         }
 
         function end() {
-          expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(downcaseChannels(channels));
+          var expected = downcaseChannels(channels);
+          expected = expected.map(function(x, index) {
+            if (index === 0) return x;
+            return x + ' key';
+          });
+          expect(downcaseChannels(self.client.opt.channels)).to.deep.equal(expected);
           done();
         }
       });
