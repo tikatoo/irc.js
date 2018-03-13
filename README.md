@@ -31,12 +31,12 @@ Of course, you can just clone this, and manually point at the library itself, bu
 
 ### Character set detection
 
-As of version 0.3.8, node-irc supports character set detection using [icu](http://site.icu-project.org/).
-In order to use this feature, you'll need to install `libiconv` (if necessary; Linux systems tend to ship this in their glibc) and `libicu` (and its headers, if necessary; see the [installation instructions](https://github.com/mooz/node-icu-charset-detector#installing-icu)).
-If you do not have these libraries or their headers installed, you will receive errors when trying to build these dependencies.
-However, node-irc will still install (assuming nothing else failed) and you'll be able to use it, just not the character set features.
+Character set detection was introduced to node-irc in version 0.3.8.
+Since then, it's had a revamp, and now uses [jschardet](https://github.com/aadsm/jschardet) and [iconv-lite](https://github.com/ashtuchkin/iconv-lite).
+It should no longer be necessary to install local libraries to get the encoding conversion to function.
+However, if the libraries fail to install for whatever reason, node-irc will still install (assuming nothing else failed) and you'll be able to use it, just not the character set features.
 
-If you install the library without the relevant dependencies at first, and later wish to enable to character set conversion functionality, simply resolve the dependency issue (install `libiconv` and `libicu`) then re-run `npm install`.
+If you install the library without the relevant dependencies at first, and later wish to enable to character set conversion functionality, simply re-run `npm install`.
 
 ## Basic Usage
 
