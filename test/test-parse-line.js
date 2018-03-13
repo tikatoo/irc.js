@@ -21,6 +21,14 @@ describe('parseMessage', function() {
 
   context('in strict mode', function() {
     sharedExamples('strict');
+
+    it('parses nonstandard fixtures according to spec', function() {
+      var checks = testHelpers.getFixtures('parse-line-strict');
+
+      Object.keys(checks).forEach(function(line) {
+        expect(JSON.stringify(parseMessage(line, false, true))).to.equal(JSON.stringify(checks[line]));
+      });
+    });
   });
 
   context('in non-strict mode', function() {
