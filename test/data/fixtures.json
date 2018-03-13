@@ -155,12 +155,30 @@
             "rawCommand": "PRIVMSG",
             "commandType": "normal",
             "args": ["#channel", "test message"]
+        },
+        ":?nick!~examplename@example.host PRIVMSG #channel :test message": {
+            "prefix": "?nick!~examplename@example.host",
+            "nick": "?nick",
+            "user": "~examplename",
+            "host": "example.host",
+            "command": "PRIVMSG",
+            "rawCommand": "PRIVMSG",
+            "commandType": "normal",
+            "args": ["#channel", "test message"]
         }
     },
     "parse-line-strict": {
         ":x/y!~examplename@example.host PRIVMSG #channel :test message": {
             "prefix": "x/y!~examplename@example.host",
             "server": "x/y!~examplename@example.host",
+            "command": "PRIVMSG",
+            "rawCommand": "PRIVMSG",
+            "commandType": "normal",
+            "args": ["#channel", "test message"]
+        },
+        ":?nick!~examplename@example.host PRIVMSG #channel :test message": {
+            "prefix": "?nick!~examplename@example.host",
+            "server": "?nick!~examplename@example.host",
             "command": "PRIVMSG",
             "rawCommand": "PRIVMSG",
             "commandType": "normal",
