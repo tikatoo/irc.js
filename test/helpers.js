@@ -241,8 +241,8 @@ function joinChannels(local, localChannels, remoteChannels, done) {
     i++;
     if (i === localChannels.length) {
       setTimeout(function() {
-        if (local.debugSpy) local.debugSpy.reset();
-        if (local.sendSpy) local.sendSpy.reset();
+        if (local.debugSpy) local.debugSpy.resetHistory();
+        if (local.sendSpy) local.sendSpy.resetHistory();
         done();
       }, 10);
     }

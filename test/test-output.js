@@ -19,7 +19,7 @@ describe('Client', function() {
     });
 
     beforeEach(function() {
-      this.logStub.reset();
+      this.logStub.resetHistory();
     });
 
     describe('debug', function() {
