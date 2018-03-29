@@ -1,5 +1,21 @@
 # Change Log
 
+## [v0.9.0](https://github.com/Throne3d/node-irc/tree/v0.9.0) (2018-03-29)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.8.1...v0.9.0)
+
+**New features:**
+
+- Use iconv-lite and jschardet instead of iconv and node-icu-charset-detector to detect and convert encodings, to reduce errors when trying to install previous optional dependencies – fixes [#53](https://github.com/Throne3d/node-irc/issues/53)
+- Allow `/` and `?` to appear in non-strict-parsed usernames – fixes [#55](https://github.com/Throne3d/node-irc/issues/55) and implements [#56](https://github.com/Throne3d/node-irc/pull/56)
+- Add 379 RPL_WHOISMODES, 335 RPL_WHOISBOT, 307, and 671 RPL_WHOISSECURE to recognized list of codes – fixes [#47](https://github.com/Throne3d/node-irc/issues/47), [#48](https://github.com/Throne3d/node-irc/issues/48), [#49](https://github.com/Throne3d/node-irc/issues/49) and [#50](https://github.com/Throne3d/node-irc/issues/50)
+
+**Misc:**
+
+- Test on Node 9, and no longer on Node 5 and 7
+- Update mocha to ^5.0.0
+- Update proxyquire to ^2.0.0
+- Fix deprecation warning for sinon's `.reset()`
+
 ## [v0.8.1](https://github.com/Throne3d/node-irc/tree/v0.8.1) (2017-11-02)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.8.0...v0.8.1)
 
