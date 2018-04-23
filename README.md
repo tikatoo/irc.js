@@ -15,6 +15,8 @@ You can access more detailed documentation for this module at [Read the Docs](ht
 
 ## Installation
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/Throne3d/node-irc.svg)](https://greenkeeper.io/)
+
 The easiest way to get it is via [npm](http://github.com/isaacs/npm):
 
 ```
