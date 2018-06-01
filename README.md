@@ -33,7 +33,7 @@ Of course, you can just clone this, and manually point at the library itself, bu
 ### Character set detection
 
 Character set detection was introduced to node-irc in version 0.3.8.
-Since then, it's had a revamp, and now uses [jschardet](https://github.com/aadsm/jschardet) and [iconv-lite](https://github.com/ashtuchkin/iconv-lite).
+Since then, it's had a revamp, and now uses [chardet](https://github.com/runk/node-chardet) and [iconv-lite](https://github.com/ashtuchkin/iconv-lite).
 It should no longer be necessary to install local libraries to get the encoding conversion to function.
 However, if the libraries fail to install for whatever reason, node-irc will still install (assuming nothing else failed) and you'll be able to use it, just not the character set features.
 

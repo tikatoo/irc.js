@@ -5,6 +5,10 @@ var chai = require('chai');
 var expect = chai.expect;
 
 describe('Client', function() {
+  function ircStubbedWith(chardet, converter) {
+    return proxyquire('../lib/irc', { chardet: chardet, 'iconv-lite': converter });
+  }
+
   describe('convertEncoding', function() {
     function sharedExamplesFor(encoding) {
       var clientConfig = {};
@@ -18,7 +22,7 @@ describe('Client', function() {
 
       context('without optional libraries', function() {
         it('does not throw with sample data', function() {
-          var ircWithoutCharset = proxyquire('../lib/irc', { jschardet: null, 'iconv-lite': null });
+          var ircWithoutCharset = ircStubbedWith(null, null);
           var client = new ircWithoutCharset.Client('localhost', 'nick', Object.assign({autoConnect: false}, clientConfig));
           expect(client.canConvertEncoding()).not.to.be.true;
           checks.causesException.forEach(function(line) {
@@ -30,7 +34,7 @@ describe('Client', function() {
         });
       });
 
-      context('with proper node-icu-charset-detector and iconv', function() {
+      context('with proper charset detector and converter', function() {
         testHelpers.hookMockSetup(beforeEach, afterEach, {client: clientConfig});
         beforeEach(function() {
           if (!this.client.canConvertEncoding()) this.skip();
@@ -66,9 +70,9 @@ describe('Client', function() {
     var utfData = [0x73, 0x63, 0x68, 0xc3, 0xb6, 0x6e];
     var mockCharsetDetector = {detect: function(str) {
         expect(Array.from(str)).to.deep.equal(latinData);
-        return {encoding: 'ISO-8859-1'};
+        return 'ISO-8859-1';
     }};
-    var mockIconvLite = {
+    var mockConv = {
       decode: function(str, charset) {
         expect(Array.from(str)).to.deep.equal(latinData);
         expect(charset).to.equal('ISO-8859-1');
@@ -81,22 +85,22 @@ describe('Client', function() {
       }
     };
 
-    it('is false when jschardet doesn\'t load', function() {
-      var ircWithoutCharsetDetector = proxyquire('../lib/irc', { jschardet: null, 'iconv-lite': mockIconvLite });
+    it('is false when the charset detector doesn\'t load', function() {
+      var ircWithoutCharsetDetector = ircStubbedWith(null, mockConv);
       var client = new ircWithoutCharsetDetector.Client('localhost', 'nick', {autoConnect: false});
       expect(ircWithoutCharsetDetector.canConvertEncoding()).to.be.false;
       expect(client.canConvertEncoding()).to.be.false;
     });
 
-    it('is false when iconv-lite doesn\'t load', function() {
-      var ircWithoutIconv = proxyquire('../lib/irc', { jschardet: mockCharsetDetector, 'iconv-lite': null });
+    it('is false when the encoding converter doesn\'t load', function() {
+      var ircWithoutIconv = ircStubbedWith(mockCharsetDetector, null);
       var client = new ircWithoutIconv.Client('localhost', 'nick', {autoConnect: false});
       expect(ircWithoutIconv.canConvertEncoding()).to.be.false;
       expect(client.canConvertEncoding()).to.be.false;
     });
 
     it('is true when convertEncoding works with test data', function() {
-      var ircWithRequires = proxyquire('../lib/irc', { jschardet: mockCharsetDetector, 'iconv-lite': mockIconvLite });
+      var ircWithRequires = ircStubbedWith(mockCharsetDetector, mockConv);
       var client = new ircWithRequires.Client('localhost', 'nick', {autoConnect: false});
       expect(ircWithRequires.canConvertEncoding()).to.be.true;
       expect(client.canConvertEncoding()).to.be.true;
