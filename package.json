@@ -36,8 +36,8 @@
     "irc-colors": "^1.1.0"
   },
   "optionalDependencies": {
-    "iconv-lite": "^0.4.19",
-    "jschardet": "^1.6.0"
+    "chardet": "^0.5.0",
+    "iconv-lite": "^0.4.19"
   },
   "devDependencies": {
     "ansi-color": "0.2.1",
