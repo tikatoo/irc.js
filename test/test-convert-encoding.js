@@ -40,8 +40,6 @@ describe('Client', function() {
           if (!this.client.canConvertEncoding()) this.skip();
         });
 
-        it('works with valid data');
-
         it('does not throw with sample data', function() {
           var client = this.client;
           checks.causesException.forEach(function(line) {
@@ -61,7 +59,26 @@ describe('Client', function() {
     });
 
     context('with utf-8 encoding config', function() {
-      sharedExamplesFor('utf-8');
+      var encoding = 'utf-8';
+      sharedExamplesFor(encoding);
+
+      context("with valid data", function() {
+        testHelpers.hookMockSetup(beforeEach, afterEach, {client: {encoding: encoding}});
+
+        var data = checks.sampleData;
+        Object.keys(data).forEach(function(conversion) {
+          var tests = data[conversion];
+          it('works ' + conversion, function() {
+            var client = this.client;
+            tests.forEach(function(pair) {
+              var original = Buffer.from(pair[0]);
+              var expected = Buffer.from(pair[1]);
+              var actual = client.convertEncoding(original);
+              expect(actual).to.deep.equal(expected);
+            });
+          });
+        });
+      });
     });
   });
 
