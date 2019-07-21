@@ -10,7 +10,7 @@ describe('parseMessage', function() {
       Object.keys(checks).forEach(function(line) {
         var stripColors = false;
         var expected = Object.assign({}, checks[line]);
-        if (expected.hasOwnProperty('stripColors')) {
+        if (Object.prototype.hasOwnProperty.call(expected, 'stripColors')) {
             stripColors = expected.stripColors;
             delete expected.stripColors;
         }
