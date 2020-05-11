@@ -1,6 +1,6 @@
 [![Travis](https://travis-ci.org/Throne3d/node-irc.svg?branch=master)](https://travis-ci.org/Throne3d/node-irc)
 [![npm](https://badge.fury.io/js/irc-upd.svg)](https://www.npmjs.com/package/irc-upd)
-[![Greenkeeper badge](https://badges.greenkeeper.io/Throne3d/node-irc.svg)](https://greenkeeper.io/)
+
 [![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
 [![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
 [![Coverage Status](https://coveralls.io/repos/github/Throne3d/node-irc/badge.svg?branch=master)](https://coveralls.io/github/Throne3d/node-irc?branch=master)
