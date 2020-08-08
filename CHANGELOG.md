@@ -1,5 +1,23 @@
 # Change Log
 
+## [v0.11.0](https://github.com/Throne3d/node-irc/tree/v0.11.0) (2020-08-08)
+[Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.10.0...v0.11.0)
+
+**Changes:**
+
+- Drop support for Node 6
+
+**Misc:**
+
+- Update dependencies (fixing `npm audit` vulnerabilities):
+  * irc-colors to ^1.5.0
+  * chardet to ^1.2.1
+  * iconv-lite to ^0.6.2
+  * plus a lot of devDependencies
+- Reduce use of .hasOwnProperty called on objects
+- Remove Greenkeeper
+- Move from Travis CI to GitHub Actions
+
 ## [v0.10.0](https://github.com/Throne3d/node-irc/tree/v0.10.0) (2018-06-14)
 [Full Changelog](https://github.com/Throne3d/node-irc/compare/v0.9.0...v0.10.0)
 
