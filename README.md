@@ -1,17 +1,12 @@
-[![Travis](https://travis-ci.org/Throne3d/node-irc.svg?branch=master)](https://travis-ci.org/Throne3d/node-irc)
-[![npm](https://badge.fury.io/js/irc-upd.svg)](https://www.npmjs.com/package/irc-upd)
 
-[![Dependency Status](https://david-dm.org/Throne3d/node-irc.svg)](https://david-dm.org/Throne3d/node-irc)
-[![devDependency Status](https://david-dm.org/Throne3d/node-irc/dev-status.svg)](https://david-dm.org/Throne3d/node-irc?type=dev)
-[![Coverage Status](https://coveralls.io/repos/github/Throne3d/node-irc/badge.svg?branch=master)](https://coveralls.io/github/Throne3d/node-irc?branch=master)
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg?style=flat)](http://opensource.org/licenses/GPL-3.0)
-[![Join the chat at https://gitter.im/node-irc](https://badges.gitter.im/node-irc.svg)](https://gitter.im/node-irc)
+irc.js is an IRC client library written in [JavaScript](http://en.wikipedia.org/wiki/JavaScript) for [Node](http://nodejs.org/).
+This project is a fork of [irc-upd](https://github.com/Throne3d/node-irc),
+which is in turn a fork of [node-irc](https://github.com/martynsmith/node-irc).
 
-
-[node-irc](https://node-irc-upd.readthedocs.io/) is an IRC client library written in [JavaScript](http://en.wikipedia.org/wiki/JavaScript) for [Node](http://nodejs.org/).
-This project is a fork of [another GitHub repository](https://github.com/martynsmith/node-irc).
-
-You can access more detailed documentation for this module at [Read the Docs](https://node-irc-upd.readthedocs.io/en/latest/)
+You can access more detailed documentation for this module at
+[the upstream irc-upd Read the Docs site](https://node-irc-upd.readthedocs.io/en/latest/).
+Up-to-date documentation for this fork may arrive eventually
+(if I ever get around to it).
 
 
 ## Installation
@@ -19,16 +14,8 @@ You can access more detailed documentation for this module at [Read the Docs](ht
 The easiest way to get it is via [npm](http://github.com/isaacs/npm):
 
 ```
-npm install irc-upd
+npm install --save "git+https://github.com/tikatoo/irc.js"
 ```
-
-If you want to run the latest version (i.e. later than the version available via [npm](http://github.com/isaacs/npm)) you can clone this repo, then use [npm](http://github.com/isaacs/npm) to link-install it:
-
-```
-npm link /path/to/your/clone
-```
-
-Of course, you can just clone this, and manually point at the library itself, but we really recommend using [npm](http://github.com/isaacs/npm)!
 
 ### Character set detection
 
